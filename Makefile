@@ -3,7 +3,7 @@
 ORG_NAME := hihg-um
 PROJECT_NAME ?= r
 OS_BASE ?= ubuntu
-OS_VER ?= 20.04
+OS_VER ?= 22.04
 
 USER ?= $$(USER)
 USERID ?= `id -u`
