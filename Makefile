@@ -12,7 +12,9 @@ DOCKER_TAG ?= $(GIT_REV)
 
 DOCKER_BUILD_ARGS :=
 
-TOOLS := 
+TOOLS := genesis gmmat prosper rava-first saige
+TOOLS := genesis saige
+DOCKER_BASE= r-base\:$(DOCKER_TAG)
 DOCKER_IMAGES := $(TOOLS:=\:$(DOCKER_TAG))
 SIF_IMAGES := $(TOOLS:=\:$(DOCKER_TAG).sif)
 
@@ -40,27 +42,26 @@ docker_clean:
 	for f in $(DOCKER_IMAGES); do \
 		docker rmi -f $(DOCKER_IMAGE_BASE)/$$f 2>/dev/null; \
 	done
+	@docker rmi -f $(DOCKER_IMAGE_BASE)/$(DOCKER_BASE) 2>/dev/null;
 
-docker: $(TOOLS) 
+docker: $(DOCKER_BASE) $(TOOLS)
 
-r-base:
-	@echo "Building Docker container $@"
+$(DOCKER_BASE):
+	@echo "Building Docker base container $@"
 	@docker build \
-                -t $(DOCKER_IMAGE_BASE)/$@:$(DOCKER_TAG) \
-                $(DOCKER_BUILD_ARGS) \
-                --build-arg BASE_IMAGE=$(OS_BASE):$(OS_VER) \
-                --build-arg RUNCMD="$@" \
-                .
+		-t $(DOCKER_IMAGE_BASE)/$(DOCKER_BASE) \
+		$(DOCKER_BUILD_ARGS) \
+		--build-arg BASE_IMAGE=$(OS_BASE):$(OS_VER) \
+		.
 
-$(TOOLS): r-base
-	@echo "Building Docker container $@"
+$(TOOLS):
+	@echo "Building Docker container $(DOCKER_IMAGE_BASE)/$@:$(DOCKER_TAG)"
 	@docker build \
 		-t $(DOCKER_IMAGE_BASE)/$@:$(DOCKER_TAG) \
 		$(DOCKER_BUILD_ARGS) \
-		--build-arg BASE_IMAGE= \
-			$(DOCKER_IMAGE_BASE)/r-base:$(DOCKER_TAG) \
+		-f ./Dockerfile.$@ \
+		--build-arg BASE_IMAGE=$(DOCKER_IMAGE_BASE)/$(DOCKER_BASE) \
 		--build-arg RUNCMD="$@" \
-		-f Dockerfile.$@ \
 		.
 
 docker_test:
