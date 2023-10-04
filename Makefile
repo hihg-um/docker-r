@@ -1,53 +1,83 @@
 # SPDX-License-Identifier: GPL-2.0
 
 ORG_NAME := hihg-um
-PROJECT_NAME ?= r
 OS_BASE ?= ubuntu
-OS_VER ?= 22.04
+OS_VER ?= 23.04
 
-USER ?= `whoami`
-USERID ?= `id -u`
-USERGNAME ?= ad
-USERGID ?= 1533
+IMAGE_REPOSITORY ?=
+DOCKER_IMAGE_BASE := $(ORG_NAME)
 
-IMAGE_REPOSITORY :=
-IMAGE := $(ORG_NAME)/$(USER)/$(PROJECT_NAME):latest
+GIT_REV := $(shell git describe --always --tags --dirty)
+DOCKER_TAG ?= $(GIT_REV)
 
-GIT_HASH ?= $(shell git log --format="%h" -n 1)
-
-# Use this for debugging builds. Turn off for a more slick build log
 DOCKER_BUILD_ARGS :=
 
-.PHONY: all build clean docker test test_docker test_apptainer
+TOOLS := r-base-lunar
+SIF_IMAGES := $(TOOLS:=\:$(DOCKER_TAG).sif)
+DOCKER_IMAGES := $(TOOLS:=\:$(DOCKER_TAG))
 
-all: docker $(PROJECT_NAME).sif test
+.PHONY: clean docker test $(TOOLS) $(DOCKER_IMAGES)
 
-test: test_docker test_apptainer
+all: docker apptainer test
 
-test_docker:
-	@echo "Testing docker image: $(IMAGE)"
-	@docker run -it -v /mnt:/mnt $(IMAGE) --version
+help:
+	@echo "Targets: all clean test"
+	@echo "         docker docker_clean docker_test docker_release"
+	@echo "         apptainer apptainer_clean apptainer_test"
+	@echo
+	@echo "Docker containers:\n$(DOCKER_IMAGES)"
+	@echo
+	@echo "Apptainer images:\n$(SIF_IMAGES)"
 
-test_apptainer: $(PROJECT_NAME).sif
-	@echo "Testing apptainer image: $(PROJECT_NAME).sif"
-	@apptainer run $(PROJECT_NAME).sif --version
+clean: apptainer_clean docker_clean
 
-clean:
-	@docker rmi -f --no-prune $(IMAGE)
-	@rm -f $(PROJECT_NAME).sif
+release: docker_release
 
-docker:
-	@docker build -t $(IMAGE) \
+test: docker_test apptainer_test
+
+# Docker
+docker_clean:
+	for f in $(DOCKER_IMAGES); do \
+		docker rmi -f $(DOCKER_IMAGE_BASE)/$$f 2>/dev/null; \
+	done
+
+docker: $(TOOLS)
+
+$(TOOLS):
+	@echo "Building Docker container $@"
+	@docker build \
+		-t $(DOCKER_IMAGE_BASE)/$@:$(DOCKER_TAG) \
 		$(DOCKER_BUILD_ARGS) \
 		--build-arg BASE_IMAGE=$(OS_BASE):$(OS_VER) \
-		--build-arg USERNAME=$(USER) \
-		--build-arg USERID=$(USERID) \
-		--build-arg USERGNAME=$(USERGNAME) \
-		--build-arg USERGID=$(USERGID) \
+		--build-arg RUNCMD="$@" \
 		.
 
-$(PROJECT_NAME).sif:
-	@apptainer build $(PROJECT_NAME).sif docker-daemon:$(IMAGE)
+docker_test:
+	for f in $(DOCKER_IMAGES); do \
+		echo "Testing Docker image: $(DOCKER_IMAGE_BASE)/$$f"; \
+		docker run -t $(DOCKER_IMAGE_BASE)/$$f; \
+	done
 
-release:
-	docker push $(IMAGE_REPOSITORY)/$(IMAGE)
+docker_release: $(DOCKER_IMAGES)
+	for f in $(DOCKER_IMAGES); do \
+		docker push $(IMAGE_REPOSITORY)/$(DOCKER_IMAGE_BASE)/$$f; \
+	done
+
+# Apptainer
+apptainer_clean:
+	@rm -f $(SIF_IMAGES)
+	@rm -f *.sif
+
+apptainer: $(SIF_IMAGES)
+
+$(SIF_IMAGES):
+	@echo "Building Apptainer $@"
+	@apptainer build $@ \
+		docker-daemon:$(DOCKER_IMAGE_BASE)/$(patsubst %.sif,%,$@)
+
+apptainer_test: $(SIF_IMAGES)
+	for f in $(SIF_IMAGES); do \
+		echo "Testing Apptainer image: $$f"; \
+		apptainer run $$f; \
+	done
+
