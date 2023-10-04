@@ -12,7 +12,8 @@ DOCKER_TAG ?= $(GIT_REV)
 
 DOCKER_BUILD_ARGS :=
 
-TOOLS := r-base-lunar
+BASE_LAYER := r-base-lunar
+TOOLS := r-saige r-genesis
 SIF_IMAGES := $(TOOLS:=\:$(DOCKER_TAG).sif)
 DOCKER_IMAGES := $(TOOLS:=\:$(DOCKER_TAG))
 
@@ -31,6 +32,8 @@ help:
 
 clean: apptainer_clean docker_clean
 
+docker: docker_base docker_tools
+
 release: docker_release
 
 test: docker_test apptainer_test
@@ -41,15 +44,24 @@ docker_clean:
 		docker rmi -f $(DOCKER_IMAGE_BASE)/$$f 2>/dev/null; \
 	done
 
-docker: $(TOOLS)
+docker_base:
+	@echo "Building Base Layer"
+	@docker build \
+		-t $(DOCKER_IMAGE_BASE)/$(BASE_LAYER):$(DOCKER_TAG) \
+		$(DOCKER_BUILD_ARGS) \
+		--build-arg BASE_IMAGE=$(OS_BASE):$(OS_VER) \
+		-f Dockerfile.$(BASE_LAYER) \
+		.
+
+docker_tools: $(TOOLS)
 
 $(TOOLS):
 	@echo "Building Docker container $@"
 	@docker build \
-		-t $(DOCKER_IMAGE_BASE)/$@:$(DOCKER_TAG) \
-		$(DOCKER_BUILD_ARGS) \
-		--build-arg BASE_IMAGE=$(OS_BASE):$(OS_VER) \
-		--build-arg RUNCMD="$@" \
+ 		-t $(DOCKER_IMAGE_BASE)/$@:$(DOCKER_TAG) \
+ 		$(DOCKER_BUILD_ARGS) \
+ 		--build-arg BASE_IMAGE=$(DOCKER_IMAGE_BASE)/$(BASE_LAYER):$(DOCKER_TAG) \
+		-f Dockerfile.$@ \
 		.
 
 docker_test:

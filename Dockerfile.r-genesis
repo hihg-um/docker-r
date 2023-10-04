@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: GPL-2.0
+ARG BASE_IMAGE
+FROM $BASE_IMAGE as base
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+	r-cran-devtools \
+	r-bioc-snpstats \
+	r-cran-genetics \
+	r-cran-optparse \
+	r-cran-qqman \
+	r-cran-tidyverse \
+	r-cran-data.table \
+	r-cran-igraph \
+	r-cran-matrix \
+	r-cran-reshape2 \
+	r-cran-r.utils \
+	r-cran-ucminf \
+	r-cran-ordinal \
+	r-cran-shape \
+	r-cran-pan \
+	r-cran-jomo \
+	r-cran-formatr \
+	r-cran-glmnet \
+	r-cran-mitml \
+	r-cran-lambda.r \
+	r-cran-futile.options \
+	r-cran-mice \
+	r-cran-rcurl \
+	r-cran-futile.logger \
+	r-cran-snow \
+	r-cran-lmtest
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    r-cran-biocmanager \
+    r-bioc-biocversion \
+    r-bioc-dnacopy \
+    r-bioc-genomeinfodbdata \
+    r-bioc-s4vectors \
+    r-bioc-iranges \
+    r-bioc-genomeinfodb \
+    r-bioc-xvector \
+    r-bioc-biostrings \
+    r-bioc-biobase \
+    r-bioc-biocparallel \
+    r-bioc-genomicranges
+
+RUN Rscript -e 'BiocManager::install("quantsmooth")'
+RUN Rscript -e 'BiocManager::install("gdsfmt")'
+RUN Rscript -e 'install.packages("operator.tools")'
+RUN Rscript -e 'install.packages("formula.tools")'
+RUN Rscript -e 'install.packages("GWASExactHW")'
+RUN Rscript -e 'install.packages("logistf")'
+RUN Rscript -e 'BiocManager::install("GWASTools")'
+RUN Rscript -e 'BiocManager::install("SeqArray")'
+RUN Rscript -e 'BiocManager::install("SeqVarTools")'
+RUN Rscript -e 'BiocManager::install("SNPRelate")'
+RUN Rscript -e 'BiocManager::install("GENESIS")'
+
+WORKDIR /app
