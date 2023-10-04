@@ -12,7 +12,7 @@ DOCKER_TAG ?= $(GIT_REV)
 
 DOCKER_BUILD_ARGS :=
 
-TOOLS := r-cran-base
+TOOLS := 
 DOCKER_IMAGES := $(TOOLS:=\:$(DOCKER_TAG))
 SIF_IMAGES := $(TOOLS:=\:$(DOCKER_TAG).sif)
 
@@ -41,14 +41,26 @@ docker_clean:
 		docker rmi -f $(DOCKER_IMAGE_BASE)/$$f 2>/dev/null; \
 	done
 
-docker: $(TOOLS)
+docker: $(TOOLS) 
 
-$(TOOLS):
+r-base:
+	@echo "Building Docker container $@"
+	@docker build \
+                -t $(DOCKER_IMAGE_BASE)/$@:$(DOCKER_TAG) \
+                $(DOCKER_BUILD_ARGS) \
+                --build-arg BASE_IMAGE=$(OS_BASE):$(OS_VER) \
+                --build-arg RUNCMD="$@" \
+                .
+
+$(TOOLS): r-base
 	@echo "Building Docker container $@"
 	@docker build \
 		-t $(DOCKER_IMAGE_BASE)/$@:$(DOCKER_TAG) \
 		$(DOCKER_BUILD_ARGS) \
-		--build-arg BASE_IMAGE=$(OS_BASE):$(OS_VER) \
+		--build-arg BASE_IMAGE= \
+			$(DOCKER_IMAGE_BASE)/r-base:$(DOCKER_TAG) \
+		--build-arg RUNCMD="$@" \
+		-f Dockerfile.$@ \
 		.
 
 docker_test:
@@ -80,3 +92,4 @@ apptainer_test: $(SIF_IMAGES)
 	done
 
 apptainer_release: $(SIF_IMAGES)
+
