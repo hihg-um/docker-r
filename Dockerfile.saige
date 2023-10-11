@@ -10,28 +10,23 @@ RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     cmake \
     git \
-    libblas-dev \
-    libstatgen-dev \
+    g++ \
+    liblzma-dev \
     libsuperlu-dev \
-    libzmat-dev \
-    libzzip-dev \
     libzstd-dev \
-    zlib1g-dev \
     python3 \
-    python3-pip \
-    python3-pymatgen \
     python3-venv \
-    python3-wheel \
+    r-base \
     r-cran-biocmanager \
     r-bioc-biocversion \
     r-cran-devtools \
     r-cran-optparse \
     r-cran-qlcmatrix \
     r-cran-r.utils \
-    r-cran-rcpp \
     r-cran-rcppparallel \
     r-cran-roxygen2 \
-    r-cran-rversions
+    r-cran-rversions \
+    zlib1g-dev
 
 # pick up remaining bioconductor dependencies not packaged w/ ubuntu 
 RUN Rscript -e 'BiocManager::install("SPAtest")' && \
@@ -42,36 +37,44 @@ RUN Rscript -e 'BiocManager::install("SPAtest")' && \
 # in Ubuntu 23.04 and later, an error is now passed for attempting to
 # globally install packages with an external package manager like pip.
 # to solve: use virtual environments for package installs
-ENV VIRTUAL_ENV=/opt/python/venv
+ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH=$PATH:"$VIRTUAL_ENV/opt/python//pythocTH"
-RUN pip install click cget savy six
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# install cget & dependencies (wheel first to avoid future deprecation) :
+RUN pip install wheel && \
+    pip install click six && \
+    pip install cget
 
-RUN git clone https://github.com/saigegit/SAIGE
+RUN git clone https://github.com/saigegit/SAIGE && \
+    rm -rf SAIGE/thirdParty && \
+    rm SAIGE/configure
 
-# Force step_2 to use 1 single thread. More threads are ineffective
-ENV OMP_NUM_THREADS=1
+# ignore dependencies from jonathon1/shrinkwrap :
+# xz, zlib, zstd are picked up above via binaries
+# xz : liblzma-dev, zlib : zlib1g-dev, zstd : libzstd-dev
+RUN cget ignore --prefix SAIGE/thirdParty/cget xz zlib zstd
+RUN cget install --prefix SAIGE/thirdParty/cget jonathonl/shrinkwrap && \
+    cget install --prefix SAIGE/thirdParty/cget statgen/savvy
+
 RUN R CMD INSTALL SAIGE
 
 FROM $BASE_IMAGE
  
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
+ENV OMP_NUM_THREADS=1
 
 # install all possible R dependencies from pre-packaged ubuntu binaries
 # - much faster install than 'install.packages()' inside R
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    r-cran-biocmanager \
-    r-bioc-biocversion \
+    r-base \
     r-cran-optparse \
-    r-cran-qlcmatrix \
-    r-cran-r.utils
+    r-cran-rcppparallel
 
-# pick up remaining bioconductor dependencies not packaged w/ ubuntu 
 WORKDIR /app
 
 COPY --from=builder /SAIGE/extdata/*.R /usr/local/bin/
 RUN chmod ug+x /usr/local/bin/*.R
 
-COPY --from=builder /usr/local/lib/R /usr/local/lib/
+COPY --from=builder /usr/local/lib/R /usr/local/lib/R
