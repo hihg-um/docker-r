@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: GPL-2.0
+ARG BASE_IMAGE
+FROM $BASE_IMAGE
+
+ARG RUNCMD
+
+RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
+	apt -y install apt-utils bzip2 curl git wget \
+	plink2 \
+	r-base r-bioc-snpstats r-cran-caret r-cran-data.table r-cran-domc \
+	r-cran-foreach r-cran-genetics r-cran-ggplot2 r-cran-glmnet \
+	r-cran-inline r-cran-mass \
+	r-cran-optparse r-cran-qqman \
+	r-cran-rcpp r-cran-rcpparmadillo r-cran-readr r-cran-stringr \
+	r-cran-tidyverse
+
+FROM base as builder
+
+RUN apt -y install r-cran-devtools r-cran-parallelly
+RUN Rscript -e 'devtools::install_github("cran/bigassertr")'
+RUN Rscript -e 'devtools::install_github("cran/parallelly")'
+RUN Rscript -e 'devtools::install_github("cran/bigreadr")'
+RUN Rscript -e 'devtools::install_github("cran/SuperLearner")'
+
+RUN git clone https://github.com/hihg-um/PROSPER.git
+
+FROM base
+WORKDIR /app
+COPY --from=builder /usr/local/lib/R /usr/local/lib/R
+
+COPY --from=builder /PROSPER .
+
+ENTRYPOINT [ "Rscript" ]
