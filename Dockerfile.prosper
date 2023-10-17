@@ -6,11 +6,10 @@ ARG RUNCMD
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
     apt -y install git wget plink2 \
-    r-bioc-snpstats r-cran-caret r-cran-data.table r-cran-domc \
-    r-cran-foreach r-cran-genetics r-cran-ggplot2 r-cran-glmnet \
-    r-cran-inline r-cran-mass r-cran-optparse r-cran-qqman \
-    r-cran-rcpp r-cran-rcpparmadillo r-cran-readr r-cran-stringr \
-    r-cran-tidyverse
+    r-cran-caret r-cran-data.table r-cran-domc \
+    r-cran-foreach r-cran-glmnet \
+    r-cran-inline r-cran-mass r-cran-optparse \
+    r-cran-rcpp r-cran-rcpparmadillo r-cran-readr r-cran-stringr
 
 FROM base as builder
 
