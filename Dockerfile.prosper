@@ -8,15 +8,15 @@ RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
     apt -y install git wget plink2 \
     r-cran-caret r-cran-data.table r-cran-domc \
     r-cran-foreach r-cran-glmnet \
-    r-cran-inline r-cran-mass r-cran-optparse \
-    r-cran-rcpp r-cran-rcpparmadillo r-cran-readr r-cran-stringr
+    r-cran-inline r-cran-mass r-cran-nnls r-cran-optparse r-cran-parallelly \
+    r-cran-r.utils r-cran-rcpp r-cran-rcpparmadillo r-cran-readr r-cran-stringr
 
 FROM base as builder
 
-RUN apt -y install r-cran-devtools r-cran-parallelly
+RUN apt-get -y install r-cran-devtools
 RUN Rscript -e 'devtools::install_github("cran/bigassertr")'
-RUN Rscript -e 'devtools::install_github("cran/parallelly")'
 RUN Rscript -e 'devtools::install_github("cran/bigreadr")'
+RUN Rscript -e 'devtools::install_github("cran/cvAUC")'
 RUN Rscript -e 'devtools::install_github("cran/SuperLearner")'
 
 RUN git clone https://github.com/hihg-um/PROSPER.git
