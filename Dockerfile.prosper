@@ -23,7 +23,14 @@ RUN git clone https://github.com/hihg-um/PROSPER.git
 
 FROM base
 WORKDIR /app
-COPY --from=builder /usr/local/lib/R /usr/local/lib/R
+COPY --from=builder /usr/local/lib/R/site-library/bigassertr \
+    /usr/local/lib/R/site-library/bigassertr
+COPY --from=builder /usr/local/lib/R/site-library/bigreadr \
+    /usr/local/lib/R/site-library/bigreadr
+COPY --from=builder /usr/local/lib/R/site-library/cvAUC \
+    /usr/local/lib/R/site-library/cvAUC
+COPY --from=builder /usr/local/lib/R/site-library/SuperLearner \
+    /usr/local/lib/R/site-library/SuperLearner
 
 COPY --from=builder /PROSPER .
 
