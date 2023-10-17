@@ -12,8 +12,7 @@ DOCKER_TAG ?= $(GIT_REV)
 
 DOCKER_BUILD_ARGS :=
 
-TOOLS := genesis gmmat prosper rava-first saige
-TOOLS := genesis saige
+TOOLS := genesis prosper saige
 DOCKER_BASE= r-base\:$(DOCKER_TAG)
 DOCKER_IMAGES := $(TOOLS:=\:$(DOCKER_TAG))
 SIF_IMAGES := $(TOOLS:=\:$(DOCKER_TAG).sif)
