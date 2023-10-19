@@ -2,6 +2,8 @@
 ARG BASE_IMAGE
 FROM $BASE_IMAGE
 
+ENV TZ="EST"
+
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install apt-utils bzip2 curl \
 	r-base
