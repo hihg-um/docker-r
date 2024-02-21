@@ -1,8 +1,13 @@
 # SPDX-License-Identifier: GPL-2.0
 ARG BASE_IMAGE
-FROM $BASE_IMAGE as builder
+FROM ubuntu:18.04 as base
 
-ARG RUNCMD
+# install R
+RUN apt-get update && \
+	DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  r-base
+
+FROM base as builder
 
 # install devtools for build
 RUN apt-get update && \
@@ -12,8 +17,11 @@ RUN apt-get update && \
 # other dependencies: bdsmatrix, CompQuadForm, coxme
 RUN Rscript -e 'devtools::install_github("DavisBrian/seqMeta")'
 
-FROM $BASE_IMAGE
+FROM base as runtime
 
-WORKDIR /app
+ARG RUN_CMD
 
 COPY --from=builder /usr/local/lib/R /usr/local/lib/R
+
+ARG TEST="/test.sh"
+COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
