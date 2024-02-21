@@ -26,6 +26,5 @@ RUN apt -y update -qq && apt -y upgrade && \
 COPY --from=builder /PRSice/PRSice /usr/local/bin/PRSice
 COPY --from=builder /PRSice/PRSice.R /usr/local/bin/PRSice.R
 
-ARG ENTRY="/entrypoint.sh"
-RUN echo "#!/bin/bash\n$RUN_CMD \$@" > ${ENTRY} && chmod ugo+rx ${ENTRY}
-ENTRYPOINT [ "/entrypoint.sh" ]
+ARG TEST="/test.sh"
+COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}

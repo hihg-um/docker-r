@@ -34,4 +34,5 @@ COPY --from=builder /usr/local/lib/R/site-library/SuperLearner \
 
 COPY --from=builder /PROSPER .
 
-ENTRYPOINT [ "Rscript" ]
+ARG TEST="/test.sh"
+COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}

@@ -30,3 +30,6 @@ RUN Rscript -e 'install.packages("CompQuadForm")' && \
 
 # install GMMAT
 RUN Rscript -e 'devtools::install_github("hanchenphd/GMMAT")'
+
+ARG TEST="/test.sh"
+COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}

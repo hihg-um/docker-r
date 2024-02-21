@@ -62,3 +62,6 @@ RUN Rscript -e 'BiocManager::install("quantsmooth")' && \
 	Rscript -e 'BiocManager::install("GENESIS")'
 
 WORKDIR /app
+
+ARG TEST="/test.sh"
+COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
