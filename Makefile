@@ -10,7 +10,8 @@ TOOLS := genesis gmmat mergeomics prosper prsice saige seqmeta
 
 DOCKER_BUILD_ARGS ?=
 DOCKER_TAG ?= $(shell git describe --tags --broken --dirty --all --long | \
-		sed "s,heads/,," | sed "s,tags/,," \
+		sed "s,heads/,," | sed "s,tags/,," | \
+		sed "s,remotes/pull/.*/,," \
 		)_$(shell uname -m)_$(shell uname -s | \
 		tr '[:upper:]' '[:lower:]')
 DOCKER_BASE ?= $(patsubst docker-%,%,$(shell basename \
