@@ -20,6 +20,8 @@ DOCKER_BASE ?= $(patsubst docker-%,%,$(shell basename \
 DOCKER_IMAGES := $(TOOLS:=\:$(DOCKER_TAG))
 SIF_IMAGES := $(TOOLS:=_$(DOCKER_TAG).sif)
 
+IMAGE_TEST := /test.sh
+
 .PHONY: apptainer_clean apptainer_test \
 	docker_base docker_clean docker_test docker_release $(TOOLS)
 
