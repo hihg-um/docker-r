@@ -2,7 +2,7 @@
 ARG BASE_IMAGE
 FROM $BASE_IMAGE as base
 
-ARG RUNCMD
+ARG RUN_CMD
 
 # install cran binaries
 RUN apt-get update && \
@@ -60,8 +60,6 @@ RUN Rscript -e 'BiocManager::install("quantsmooth")' && \
 	Rscript -e 'BiocManager::install("SeqVarTools")' && \
 	Rscript -e 'BiocManager::install("SNPRelate")' && \
 	Rscript -e 'BiocManager::install("GENESIS")'
-
-WORKDIR /app
 
 ARG TEST="/test.sh"
 COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}

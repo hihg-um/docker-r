@@ -14,7 +14,7 @@ RUN git clone --depth 1 --branch ${PRSICE_VER} https://github.com/choishingwan/P
 	cd PRSice && \
 	g++ --std=c++17 -I inc/ -isystem lib/ -I /usr/include/eigen3/ -DNDEBUG -O3 -march=native src/*.cpp -lz -lpthread -o PRSice
 
-FROM $BASE_IMAGE
+FROM $BASE_IMAGE as runtime
 
 ARG RUN_CMD=PRSice.R
 

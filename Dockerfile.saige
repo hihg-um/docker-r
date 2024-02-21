@@ -58,7 +58,9 @@ RUN cget install --prefix SAIGE/thirdParty/cget jonathonl/shrinkwrap && \
 
 RUN R CMD INSTALL SAIGE
 
-FROM $BASE_IMAGE
+FROM $BASE_IMAGE as runtime
+
+ARG RUN_CMD
  
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
@@ -71,8 +73,6 @@ RUN apt-get update && \
 	r-base \
 	r-cran-optparse \
 	r-cran-rcppparallel
-
-WORKDIR /app
 
 COPY --from=builder /SAIGE/extdata/*.R /usr/local/bin/
 RUN chmod ug+x /usr/local/bin/*.R
