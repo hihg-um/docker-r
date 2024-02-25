@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0
-ARG BASE_IMAGE
-FROM $BASE_IMAGE
+FROM ubuntu:20.04
 
 ARG RUN_CMD
 
@@ -31,7 +30,7 @@ RUN Rscript -e 'install.packages("CompQuadForm")' && \
 	Rscript -e 'BiocManager::install(c("SeqArray", "SeqVarTools"))'
 
 # install GMMAT
-RUN Rscript -e 'devtools::install_github("hanchenphd/GMMAT")'
+RUN Rscript -e 'devtools::install_github("hanchenphd/GMMAT@1272b9f9306406e07d84ae748811cb755c3b9abe")'
 
 ARG TEST="/test.sh"
 COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
