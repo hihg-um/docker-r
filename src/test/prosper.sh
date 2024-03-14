@@ -1,2 +1,2 @@
 #!/bin/bash
-Rscript PROSPER.R --help
+Rscript /usr/local/bin/PROSPER.R --help
