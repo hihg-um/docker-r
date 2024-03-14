@@ -1,76 +1,61 @@
 # SPDX-License-Identifier: GPL-2.0
 ARG BASE_IMAGE
-FROM $BASE_IMAGE as builder
+# ------------------------------------------------------------------------------
+# BASE LAYER
+FROM $BASE_IMAGE as base
 
-# install all possible R dependencies from pre-packaged ubuntu binaries
-# - much faster install than 'install.packages()' inside R
-RUN apt-get update && \
-	DEBIAN_FRONTEND=noninteractive apt-get install -y \
-	cmake \
-	git \
-	g++ \
-	liblzma-dev \
-	libsuperlu-dev \
-	libzstd-dev \
-	python3 \
-	python3-venv \
-	r-base \
-	r-cran-biocmanager \
-	r-bioc-biocversion \
-	r-cran-devtools \
-	r-cran-optparse \
-	r-cran-qlcmatrix \
-	r-cran-r.utils \
-	r-cran-rcppparallel \
-	r-cran-roxygen2 \
-	r-cran-rversions \
-	zlib1g-dev
+# shared builder and runtime dependencies
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
+	apt-get install -y --no-install-recommends \
+	r-cran-data.table r-cran-lattice r-cran-matrix \
+	r-cran-optparse r-cran-rcpp r-cran-rcppparallel \
+	r-cran-rhpcblasctl \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /tmp/*
+# ------------------------------------------------------------------------------
+# BUILDER LAYER
+FROM base as builder
+
+# builder only dependencies
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
+	apt-get install -y --no-install-recommends \
+	cmake git g++ \
+	liblzma-dev libsavvy-dev libshrinkwrap-dev \
+	libsuperlu-dev libzstd-dev zlib1g-dev \
+	r-cran-biocmanager r-bioc-biocversion r-cran-bh \
+	r-cran-dplyr r-cran-qlcmatrix r-cran-r.utils \
+	r-cran-rcpparmadillo r-cran-rcppeigen r-cran-rspectra \
+	r-cran-rsqlite \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /tmp/*
 
 # pick up remaining bioconductor dependencies not packaged w/ ubuntu 
 RUN Rscript -e 'BiocManager::install("SPAtest")' && \
-	Rscript -e 'BiocManager::install("RhpcBLASctl")' && \
 	Rscript -e 'BiocManager::install("SKAT")' && \
 	Rscript -e 'BiocManager::install("MetaSKAT")'
 
-# in Ubuntu 23.04 and later, an error is now passed for attempting to
-# globally install packages with an external package manager like pip.
-# to solve: use virtual environments for package installs
-ENV VIRTUAL_ENV=/opt/venv
-RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-# install cget & dependencies (wheel first to avoid future deprecation) :
-RUN pip install wheel && \
-	pip install click six && \
-	pip install cget
-
+# clone saige and remove thirdParty and configure script
+# dependencies are already installed, so no need to run configure
 RUN git clone https://github.com/saigegit/SAIGE && \
 	rm -rf SAIGE/thirdParty && \
 	rm SAIGE/configure
 
-# ignore dependencies from jonathon1/shrinkwrap :
-# xz, zlib, zstd are picked up above via binaries
-# xz : liblzma-dev, zlib : zlib1g-dev, zstd : libzstd-dev
-RUN cget ignore --prefix SAIGE/thirdParty/cget xz zlib zstd
-RUN cget install --prefix SAIGE/thirdParty/cget jonathonl/shrinkwrap && \
-	cget install --prefix SAIGE/thirdParty/cget statgen/savvy
-
 RUN R CMD INSTALL SAIGE
-
-FROM $BASE_IMAGE as runtime
-
+# ------------------------------------------------------------------------------
+# RUNTIME LAYER
+FROM base as runtime
 ARG RUN_CMD
- 
+
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 ENV OMP_NUM_THREADS=1
 
-# install all possible R dependencies from pre-packaged ubuntu binaries
-# - much faster install than 'install.packages()' inside R
-RUN apt-get update && \
-	DEBIAN_FRONTEND=noninteractive apt-get install -y \
-	r-base \
-	r-cran-optparse \
-	r-cran-rcppparallel
+# runtime only dependencies
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
+	apt-get install -y --no-install-recommends \
+	libsuperlu6 \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /tmp/*
 
 COPY --chmod=0555 --from=builder /SAIGE/extdata/*.R /usr/local/bin/
 
@@ -78,3 +63,4 @@ COPY --from=builder /usr/local/lib/R /usr/local/lib/R
 
 ARG TEST="/test.sh"
 COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
+# ------------------------------------------------------------------------------

@@ -1,38 +1,37 @@
 # SPDX-License-Identifier: GPL-2.0
 ARG BASE_IMAGE
-FROM $BASE_IMAGE as base
+# ------------------------------------------------------------------------------
+# BUILDER LAYER
+FROM $BASE_IMAGE as builder
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
-	apt -y install git wget plink2 \
-	r-cran-caret r-cran-data.table r-cran-domc \
-	r-cran-foreach r-cran-gam r-cran-glmnet \
-	r-cran-inline r-cran-mass r-cran-nnls r-cran-optparse r-cran-parallelly \
-	r-cran-r.utils r-cran-rcpp r-cran-rcpparmadillo r-cran-readr r-cran-stringr
-
-FROM base as builder
-
-RUN apt-get -y install r-cran-devtools
-RUN Rscript -e 'devtools::install_github("cran/bigassertr")'
-RUN Rscript -e 'devtools::install_github("cran/bigreadr")'
-RUN Rscript -e 'devtools::install_github("cran/cvAUC")'
-RUN Rscript -e 'devtools::install_github("cran/SuperLearner")'
+	apt -y install --no-install-recommends \
+	git \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /tmp/*
 
 RUN git clone https://github.com/hihg-um/PROSPER.git
-
-FROM base as runtime
-
+# ------------------------------------------------------------------------------
+# RUNTIME LAYER
+FROM $BASE_IMAGE as runtime
 ARG RUN_CMD
 
-COPY --from=builder /usr/local/lib/R/site-library/bigassertr \
-	/usr/local/lib/R/site-library/bigassertr
-COPY --from=builder /usr/local/lib/R/site-library/bigreadr \
-	/usr/local/lib/R/site-library/bigreadr
-COPY --from=builder /usr/local/lib/R/site-library/cvAUC \
-	/usr/local/lib/R/site-library/cvAUC
-COPY --from=builder /usr/local/lib/R/site-library/SuperLearner \
-	/usr/local/lib/R/site-library/SuperLearner
+RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
+	apt -y install --no-install-recommends \
+	plink2 \
+	r-cran-caret r-cran-data.table r-cran-domc \
+	r-cran-foreach r-cran-gam r-cran-glmnet \
+	r-cran-inline r-cran-mass r-cran-nnls \
+	r-cran-optparse r-cran-parallelly r-cran-r.utils \
+	r-cran-rcpp r-cran-rcpparmadillo r-cran-readr \
+	r-cran-stringr \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /tmp/*
+
+RUN Rscript -e 'install.packages(c("bigassertr, bigreadr, cvAUC, SuperLearner"))'
 
 COPY --chmod=0555 --from=builder /PROSPER/scripts /usr/local/bin
 
 ARG TEST="/test.sh"
 COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
+# ------------------------------------------------------------------------------

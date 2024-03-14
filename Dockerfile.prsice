@@ -1,30 +1,40 @@
+# SPDX-License-Identifier: GPL-2.0
 ARG BASE_IMAGE
-FROM ubuntu:20.04 as builder
+# ------------------------------------------------------------------------------
+# BUILDER LAYER
+FROM $BASE_IMAGE as builder
 
-ARG PRSICE_VER=2.3.5
+# builder only dependencies
+# PRSice currently only compiles on Ubuntu<20.04
+RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
+	apt -y install \
+	cmake git \
+	libpthread-stubs0-dev zlib1g-dev \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /tmp/*
 
-RUN apt -y update -qq && apt -y upgrade && \
-	DEBIAN_FRONTEND=noninteractive apt -y install \
-	g++ git \
-	libeigen3-dev \
-	libpthread-stubs0-dev \
-	zlib1g-dev
-
-RUN git clone --depth 1 --branch ${PRSICE_VER} https://github.com/choishingwan/PRSice.git && \
+RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
 	cd PRSice && \
-	g++ --std=c++17 -I inc/ -isystem lib/ -I /usr/include/eigen3/ -DNDEBUG -O3 -march=native src/*.cpp -lz -lpthread -o PRSice
-
+	mkdir build && \
+	cd build && \
+	cmake ../ && \
+	make
+# ------------------------------------------------------------------------------
+# RUNTIME LAYER
 FROM $BASE_IMAGE as runtime
+ARG RUN_CMD
 
-ARG RUN_CMD=PRSice.R
-
-RUN apt -y update -qq && apt -y upgrade && \
-	DEBIAN_FRONTEND=noninteractive apt -y install \
+# runtime only dependencies
+RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
+	apt -y install --no-install-recommends \
 	r-cran-data.table r-cran-ggplot2 \
-	r-cran-optparse r-cran-rcolorbrewer
+	r-cran-optparse r-cran-rcolorbrewer \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /tmp/*
 
-COPY --chmod=0555 --from=builder /PRSice/PRSice /usr/local/bin/PRSice
+COPY --chmod=0555 --from=builder /PRSice/bin/PRSice /usr/local/bin/PRSice
 COPY --chmod=0555 --from=builder /PRSice/PRSice.R /usr/local/bin/PRSice.R
 
 ARG TEST="/test.sh"
 COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
+# ------------------------------------------------------------------------------
