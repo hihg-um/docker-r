@@ -6,7 +6,7 @@ OS_VER ?= 24.04
 
 IMAGE_REPOSITORY ?=
 
-TOOLS := genesis gmmat prosper prsice saige seqmeta
+TOOLS := snpstats genesis gmmat prosper prsice saige seqmeta
 
 DOCKER_BUILD_ARGS ?=
 DOCKER_TAG ?= $(shell git describe --tags --broken --dirty --all --long | \
