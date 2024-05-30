@@ -12,7 +12,6 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-cran-rcolorbrewer \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
-
 # ------------------------------------------------------------------------------
 # BUILDER LAYER
 FROM base as builder
@@ -22,10 +21,12 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
 		zlib1g-dev \
 		cmake \
-		g++ \
 		git \
+		g++ \
 		make \
 		r-cran-rcppeigen
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
 	cd PRSice && mkdir build && cd build && cmake ../ && make
