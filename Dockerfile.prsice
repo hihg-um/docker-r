@@ -4,6 +4,7 @@ FROM $BASE as base
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
 		libeigen3-dev \
+		libgzstream0 \
 		libpthread-stubs0-dev \
 		zlib1g \
 		r-cran-data.table \
@@ -19,6 +20,7 @@ FROM base as builder
 # builder only dependencies
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
+		libgzstream-dev \
 		zlib1g-dev \
 		cmake \
 		git \
