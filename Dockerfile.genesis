@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0
-ARG BASE_IMAGE
+ARG BASE
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
-FROM $BASE_IMAGE as runtime
+FROM $BASE as runtime
 ARG RUN_CMD
 
 # runtime dependencies

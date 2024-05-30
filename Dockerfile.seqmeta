@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0
-ARG BASE_IMAGE
+ARG BASE
 # ------------------------------------------------------------------------------
 # BASE LAYER
 FROM ubuntu:22.04 as base

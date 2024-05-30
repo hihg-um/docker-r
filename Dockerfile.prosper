@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0
-ARG BASE_IMAGE
+ARG BASE
 # ------------------------------------------------------------------------------
 # BUILDER LAYER
-FROM $BASE_IMAGE as builder
+FROM $BASE as builder
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends \
@@ -13,7 +13,7 @@ RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 RUN git clone https://github.com/hihg-um/PROSPER.git
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
-FROM $BASE_IMAGE as runtime
+FROM $BASE as runtime
 ARG RUN_CMD
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \

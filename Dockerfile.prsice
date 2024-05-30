@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0
-ARG BASE_IMAGE
+ARG BASE
 # ------------------------------------------------------------------------------
 # BUILDER LAYER
-FROM $BASE_IMAGE as builder
+FROM $BASE as builder
 
 # builder only dependencies
 # PRSice currently only compiles on Ubuntu<20.04
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install \
 	cmake g++ git \
-	libeigen3-dev libpthread-stubs0-dev zlib1g-dev
+	libeigen3-dev libgzstream-dev libpthread-stubs0-dev zlib1g-dev
 
 RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
 	cd PRSice && \
@@ -17,14 +17,14 @@ RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
 	cmake ../ && make
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
-FROM $BASE_IMAGE as runtime
+FROM $BASE as runtime
 ARG RUN_CMD
 
 # runtime only dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends \
-	libeigen3-dev r-cran-data.table r-cran-ggplot2 \
-	r-cran-optparse r-cran-rcolorbrewer \
+	libeigen3-dev libgzstream0 \
+	r-cran-data.table r-cran-ggplot2 r-cran-optparse r-cran-rcolorbrewer \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm -rf /tmp/*
 
