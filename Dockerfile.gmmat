@@ -19,23 +19,24 @@ FROM base as builder
 # builder only dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends \
-	libdeflate-dev libzstd-dev liblzma-dev r-cran-remotes \
-	r-cran-biocmanager \
+	gcc libdeflate-dev libzstd-dev liblzma-dev make \
 	r-cran-devtools \
 	r-cran-data.table \
 	r-cran-domc \
 	r-cran-foreach \
 	r-cran-matrix \
 	r-cran-rcpparmadillo \
+	r-cran-remotes \
+	r-bioc-s4vectors \
 	r-cran-testthat \
+	r-cran-biocmanager \
 	r-bioc-biobase \
 	r-bioc-biocgenerics \
 	r-bioc-biocparallel \
 	r-bioc-biostrings \
 	r-bioc-iranges \
 	r-bioc-genomeinfodb \
-	r-bioc-genomicranges \
-	r-bioc-s4vectors && \
+	r-bioc-genomicranges && \
 	rm -rf /var/lib/apt/lists/* && rm -rf /tmp/*
 
 

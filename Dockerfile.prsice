@@ -8,17 +8,13 @@ FROM $BASE_IMAGE as builder
 # PRSice currently only compiles on Ubuntu<20.04
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install \
-	cmake git \
-	libpthread-stubs0-dev zlib1g-dev \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+	cmake g++ git \
+	libeigen3-dev libpthread-stubs0-dev zlib1g-dev
 
 RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
 	cd PRSice && \
-	mkdir build && \
-	cd build && \
-	cmake ../ && \
-	make
+	mkdir build && cd build && \
+	cmake ../ && make
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM $BASE_IMAGE as runtime
@@ -27,7 +23,7 @@ ARG RUN_CMD
 # runtime only dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends \
-	r-cran-data.table r-cran-ggplot2 \
+	libeigen3-dev r-cran-data.table r-cran-ggplot2 \
 	r-cran-optparse r-cran-rcolorbrewer \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm -rf /tmp/*
