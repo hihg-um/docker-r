@@ -1,37 +1,61 @@
 # SPDX-License-Identifier: GPL-2.0
 ARG BASE
 # ------------------------------------------------------------------------------
-# BUILDER LAYER
-FROM $BASE as builder
+FROM $BASE as base
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
-	git \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+	gfortran \
+	plink2 \
+	r-cran-bitops \
+	r-cran-catools \
+	r-cran-data.table \
+	r-cran-foreach \
+	r-cran-gam \
+	r-cran-gplots \
+	r-cran-gtools \
+	r-cran-nnls \
+	r-cran-parallelly \
+	r-cran-readr \
+	r-cran-rcpp \
+	r-cran-rocr \
+	r-cran-stringr \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
+# BUILDER LAYER
+FROM base as builder
+
+RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
+	apt -y install --no-install-recommends --no-install-suggests \
+	g++ \
+	gcc \
+	git \
+	make \
+	zlib1g-dev
+
+RUN Rscript -e 'install.packages(c("bigassertr", "bigreadr", "cvAUC", "SuperLearner"))'
 RUN git clone https://github.com/hihg-um/PROSPER.git
+
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
-FROM $BASE
+FROM base
 ARG RUN_CMD
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
-	plink2 \
-	r-cran-bitops r-cran-caret r-cran-catools \
-	r-cran-data.table r-cran-domc r-cran-foreach \
-	r-cran-gam r-cran-glmnet r-cran-gplots \
-	r-cran-gtools r-cran-inline r-cran-mass \
-	r-cran-nnls r-cran-optparse r-cran-parallelly \
-	r-cran-r.utils r-cran-rcpp r-cran-rcpparmadillo \
-	r-cran-readr r-cran-rocr r-cran-stringr \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
-
-RUN Rscript -e 'install.packages(c("bigassertr", "bigreadr", "cvAUC", "SuperLearner"))'
+	r-cran-caret \
+	r-cran-domc \
+	r-cran-glmnet \
+	r-cran-inline r-cran-mass \
+	r-cran-optparse \
+	r-cran-r.utils \
+	r-cran-rcpparmadillo \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 COPY --chmod=0555 --from=builder /PROSPER/scripts /usr/local/bin
+COPY --chmod=0555 --from=builder /usr/local/lib/R/ /usr/local/lib/R/
 
 ARG TEST="/test.sh"
 COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}

@@ -7,11 +7,33 @@ FROM $BASE as base
 # shared builder and runtime dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
-	r-cran-codetools r-cran-data.table r-cran-foreach \
-	r-cran-iterators r-cran-lattice r-cran-matrix \
-	r-cran-rcpp r-cran-rcpparmadillo \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+	libblas3 \
+	libbz2-1.0 \
+	liblapack3 \
+	liblzma5 \
+	libzstd1 \
+	zlib1g \
+	gfortran \
+	r-cran-foreach \
+	r-cran-iterators \
+	r-cran-jomo \
+	r-cran-generics \
+	r-cran-glmnet \
+	r-cran-lattice \
+	r-cran-matrix \
+	r-cran-minqa \
+	r-cran-pan \
+	r-cran-rcpp \
+	r-cran-rcpparmadillo \
+	r-bioc-biobase \
+	r-bioc-biocgenerics \
+	r-bioc-biocparallel \
+	r-bioc-iranges \
+	r-bioc-genomicranges \
+	r-bioc-s4vectors \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
 # ------------------------------------------------------------------------------
 # BUILDER LAYER
 FROM base as builder
@@ -19,35 +41,39 @@ FROM base as builder
 # builder only dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
-	libdeflate-dev libzstd-dev liblzma-dev r-cran-remotes \
-	r-cran-biocmanager \
-	r-cran-devtools \
-	r-cran-data.table \
+	liblapack-dev \
+	libblas-dev \
+	libbz2-dev \
+	libdeflate-dev \
+	libzstd-dev \
+	liblzma-dev \
+	zlib1g-dev \
+	g++ \
+	gcc \
+	make \
+	pkg-config \
+	r-cran-codetools \
+	r-cran-remotes \
 	r-cran-domc \
-	r-cran-foreach \
-	r-cran-matrix \
-	r-cran-rcpparmadillo \
-	r-cran-testthat \
-	r-bioc-biobase \
-	r-bioc-biocgenerics \
-	r-bioc-biocparallel \
-	r-bioc-biostrings \
-	r-bioc-iranges \
-	r-bioc-genomeinfodb \
-	r-bioc-genomicranges \
-	r-bioc-s4vectors && \
-	rm -rf /var/lib/apt/lists/* && rm -rf /tmp/*
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
+WORKDIR /usr/src
+RUN	Rscript -e 'install.packages(c("formula.tools"))' && \
+	Rscript -e 'install.packages(c("operator.tools"))' && \
+	Rscript -e 'remotes::install_github("cran/logistf")' && \
+	Rscript -e 'install.packages("CompQuadForm")' && \
+	Rscript -e 'remotes::install_github("smgogarten/SeqVarTools")' && \
+	Rscript -e 'remotes::install_github("smgogarten/SeqArray")' && \
+	Rscript -e 'remotes::install_github("hihg-um/GMMAT", dependencies=FALSE)'
+RUN	rm -rf ./* /tmp/*
 
-# install GMMAT
-RUN Rscript -e 'install.packages("CompQuadForm")' && \
-    Rscript -e 'remotes::install_github("hihg-um/GMMAT", dependencies=FALSE)'
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM base
 ARG RUN_CMD
 
-COPY --from=builder /usr/local/lib/R /usr/local/lib/R
+COPY --from=builder /usr/local/lib/R/ /usr/local/lib/R/
 
 ARG TEST="/test.sh"
 COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}

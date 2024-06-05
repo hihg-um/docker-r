@@ -7,11 +7,19 @@ FROM $BASE as base
 # shared builder and runtime dependencies
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
 	apt-get install -y --no-install-recommends --no-install-suggests \
-	r-cran-data.table r-cran-lattice r-cran-matrix \
-	r-cran-optparse r-cran-rcpp r-cran-rcppparallel \
+	dpkg-dev \
+	gfortran \
+	libsuperlu6 \
+	r-cran-data.table \
+	r-cran-lattice \
+	r-cran-matrix \
+	r-cran-optparse \
+	r-cran-rcpp \
+	r-cran-rcppparallel \
 	r-cran-rhpcblasctl \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
 # ------------------------------------------------------------------------------
 # BUILDER LAYER
 FROM base as builder
@@ -19,26 +27,40 @@ FROM base as builder
 # builder only dependencies
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
 	apt-get install -y --no-install-recommends --no-install-suggests \
-	cmake git g++ \
-	liblzma-dev libsavvy-dev libshrinkwrap-dev \
-	libsuperlu-dev libzstd-dev zlib1g-dev \
-	r-cran-biocmanager r-bioc-biocversion r-cran-bh \
-	r-cran-dplyr r-cran-qlcmatrix r-cran-r.utils \
-	r-cran-rcpparmadillo r-cran-rcppeigen r-cran-rspectra \
+	cmake \
+	git \
+	g++ \
+	make \
+	liblzma-dev \
+	libsavvy-dev \
+	libshrinkwrap-dev \
+	libsuperlu-dev \
+	libzstd-dev \
+	zlib1g-dev \
+	r-bioc-biocversion \
+	r-cran-bh \
+	r-cran-dplyr \
+	r-cran-qlcmatrix \
+	r-cran-r.utils \
+	r-cran-rcpparmadillo \
+	r-cran-rcppeigen \
+	r-cran-remotes \
+	r-cran-rspectra \
 	r-cran-rsqlite \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 # pick up remaining bioconductor dependencies not packaged w/ ubuntu 
-RUN Rscript -e 'BiocManager::install("SPAtest")' && \
-	Rscript -e 'BiocManager::install("SKAT")' && \
-	Rscript -e 'BiocManager::install("MetaSKAT")'
+RUN	Rscript -e 'remotes::install_github("cran/SPAtest")' && \
+	Rscript -e 'remotes::install_github("cran/SKAT")' && \
+	Rscript -e 'remotes::install_github("cran/MetaSKAT")'
 
+#RUN	Rscript -e 'remotes::install_github("saigegit/SAIGE", dependencies=FALSE)'
 # clone saige and remove thirdParty and configure script
 # dependencies are already installed, so no need to run configure
-RUN git clone https://github.com/saigegit/SAIGE && \
-	rm -rf SAIGE/thirdParty && \
-	rm SAIGE/configure
+
+RUN	git clone https://github.com/saigegit/SAIGE && \
+	rm -rf SAIGE/thirdParty && rm SAIGE/configure
 
 RUN R CMD INSTALL SAIGE
 # ------------------------------------------------------------------------------
@@ -49,13 +71,6 @@ ARG RUN_CMD
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 ENV OMP_NUM_THREADS=1
-
-# runtime only dependencies
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
-	apt-get install -y --no-install-recommends --no-install-suggests \
-	libsuperlu6 \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
 
 COPY --chmod=0555 --from=builder /SAIGE/extdata/*.R /usr/local/bin/
 

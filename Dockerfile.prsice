@@ -1,36 +1,42 @@
 # SPDX-License-Identifier: GPL-2.0
 ARG BASE
+
+FROM $BASE as base
+RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
+	apt -y install --no-install-recommends --no-install-suggests \
+	libeigen3-dev \
+	libpthread-stubs0-dev \
+	zlib1g \
+	r-cran-data.table \
+	r-cran-ggplot2 \
+	r-cran-optparse \
+	r-cran-rcolorbrewer \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
 # ------------------------------------------------------------------------------
 # BUILDER LAYER
-FROM $BASE as builder
+FROM base as builder
+ENV EIGEN_INCLUDE_DIR="/usr/include/eigen3/Eigen/src"
+ENV EIGEN_INCLUDE_DIR="/usr/share/eigen3/cmake/"
 
-# builder only dependencies
-# PRSice currently only compiles on Ubuntu<20.04
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
-	cmake git \
-	libpthread-stubs0-dev zlib1g-dev \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+	cmake \
+	g++ \
+	git \
+	make \
+	zlib1g-dev \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
-	cd PRSice && \
-	mkdir build && \
-	cd build && \
-	cmake ../ && \
-	make
+	cd PRSice && mkdir build && cd build && \
+	EIGEN_INCLUDE_DIR="/usr/share/eigen3/cmake/" cmake ../ && make
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
-FROM $BASE
+FROM base
 ARG RUN_CMD
-
-# runtime only dependencies
-RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
-	apt -y install --no-install-recommends --no-install-suggests \
-	r-cran-data.table r-cran-ggplot2 \
-	r-cran-optparse r-cran-rcolorbrewer \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
 
 COPY --chmod=0555 --from=builder /PRSice/bin/PRSice /usr/local/bin/PRSice
 COPY --chmod=0555 --from=builder /PRSice/PRSice.R /usr/local/bin/PRSice.R

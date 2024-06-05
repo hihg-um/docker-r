@@ -4,26 +4,34 @@ ARG BASE
 # BASE LAYER
 FROM ubuntu:22.04 as base
 
+RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
+	apt -y install --no-install-recommends --no-install-suggests \
+	r-cran-lattice \
+	r-cran-matrix \
+	r-cran-nlme \
+	r-cran-remotes \
+	r-cran-survival \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+FROM base as builder
 # builder only dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
-	make r-base r-base-dev \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+	make \
+	r-base-dev
+
+RUN	Rscript -e 'install.packages(c("bdsmatrix"))' && \
+	Rscript -e 'install.packages(c("CompQuadForm"))' && \
+	Rscript -e 'install.packages(c("coxme"))'
+RUN	Rscript -e 'remotes::install_github("DavisBrian/seqMeta")'
+
 #------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM base
 ARG RUN_CMD
 
-RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
-	apt -y install --no-install-recommends --no-install-suggests \
-	r-cran-lattice r-cran-nlme r-cran-matrix \
-	r-cran-remotes r-cran-survival \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
-
-RUN Rscript -e 'install.packages(c("bdsmatrix", "CompQuadForm", "coxme"))' && \ 
-	Rscript -e 'remotes::install_github("DavisBrian/seqMeta")'
+COPY --from=builder /usr/local/lib/R/ /usr/local/lib/R/
 
 ARG TEST="/test.sh"
 COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
