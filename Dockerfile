@@ -7,7 +7,8 @@ ENV TZ="UTC"
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
-	apt-utils bzip2 curl make \
-	r-base r-base-dev && \
+	ca-certificates \
+	r-base \
+	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 # ------------------------------------------------------------------------------

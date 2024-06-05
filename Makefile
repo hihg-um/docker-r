@@ -6,8 +6,7 @@ OS_VER ?= 24.04
 
 IMAGE_REPOSITORY ?=
 
-#TOOLS := genesis gmmat prosper prsice saige seqmeta
-TOOLS := genesis prosper prsice saige seqmeta
+TOOLS := genesis gmmat prosper prsice saige
 
 GIT_TAG = $(shell git describe --tags --exact-match)
 GIT_REV = $(shell git describe --broken --dirty --all --long | \

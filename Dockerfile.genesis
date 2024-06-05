@@ -1,35 +1,102 @@
 # SPDX-License-Identifier: GPL-2.0
 ARG BASE
 # ------------------------------------------------------------------------------
-# RUNTIME LAYER
-FROM $BASE
+FROM $BASE as base
 ARG RUN_CMD
 
 # runtime dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
-	r-cran-data.table r-cran-formatr r-cran-futile.logger \
-	r-cran-futile.options r-cran-genetics r-cran-glmnet \
-	r-cran-igraph r-cran-jomo r-cran-lambda.r \
-	r-cran-lmtest r-cran-optparse r-cran-ordinal \
-	r-cran-matrix r-cran-matrixmodels r-cran-mice \
-	r-cran-mitml r-cran-pan r-cran-plogr \
-	r-cran-qqman r-cran-quantreg r-cran-r.utils \
-	r-cran-rcurl r-cran-reshape2 r-cran-rsqlite \
-	r-cran-sandwich r-cran-shape r-cran-snow \
-	r-cran-sparsem r-cran-tidyverse r-cran-ucminf \
-	r-cran-biocmanager r-bioc-biocversion r-bioc-biobase \
-	r-bioc-biocparallel r-bioc-biostrings r-bioc-dnacopy \
-	r-bioc-genomeinfodbdata r-bioc-genomeinfodb r-bioc-genomicranges \
-	r-bioc-iranges r-bioc-s4vectors r-bioc-snpstats r-bioc-xvector \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+	gfortran \
+	libblas3 \
+	liblapack3 \
+	liblzma5 \
+	zlib1g \
+	libglpk40 \
+	libsqlitecpp-dev \
+	r-cran-data.table \
+	r-cran-dbi \
+	r-cran-formatr \
+	r-cran-futile.logger \
+	r-cran-futile.options \
+	r-cran-genetics \
+	r-cran-glmnet \
+	r-cran-igraph \
+	r-cran-jomo \
+	r-cran-lambda.r \
+	r-cran-lmtest \
+	r-cran-matrix \
+	r-cran-matrixmodels \
+	r-cran-mice \
+	r-cran-mitml \
+	r-cran-pan \
+	r-cran-plogr \
+	r-cran-optparse \
+	r-cran-ordinal \
+	r-cran-qqman \
+	r-cran-r.utils \
+	r-cran-rcurl \
+	r-cran-reshape2 \
+	r-cran-rsqlite \
+	r-cran-sandwich \
+	r-cran-shape \
+	r-cran-snow \
+	r-cran-sparsem \
+	r-cran-tidyverse \
+	r-cran-ucminf \
+	r-bioc-biobase \
+	r-bioc-biocparallel \
+	r-bioc-biocversion \
+	r-bioc-biostrings \
+	r-bioc-dnacopy \
+	r-bioc-genomeinfodb \
+	r-bioc-genomeinfodbdata \
+	r-bioc-genomicranges \
+	r-bioc-iranges \
+	r-bioc-s4vectors \
+	r-bioc-snpstats \
+	r-bioc-xvector \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
-RUN Rscript -e 'install.packages(c("formula.tools", \
-		"GWASExactHW", "logistf", "operator.tools"))' && \
-	Rscript -e 'BiocManager::install(c("gdsfmt", "GWASTools", \
-		"quantsmooth", "SeqArray", "SeqVarTools", "SNPRelate"))' && \
-	Rscript -e 'BiocManager::install("GENESIS")'
+FROM base as builder
+
+RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
+	apt -y install --no-install-recommends --no-install-suggests \
+	g++ \
+	libblas-dev \
+	liblapack-dev \
+	liblzma-dev \
+	zlib1g-dev \
+	libboost1.83-all-dev \
+	libglpk-dev \
+	make \
+	r-cran-remotes
+
+WORKDIR /usr/src
+RUN	Rscript -e 'install.packages(c("GWASExactHW"))' && \
+	Rscript -e 'install.packages(c("operator.tools"))' && \
+	Rscript -e 'install.packages(c("formula.tools"))' && \
+	Rscript -e 'install.packages(c("logistf"))' && \
+	Rscript -e 'install.packages(c("fastmap"))' && \
+	Rscript -e 'install.packages(c("quantreg"))' && \
+	Rscript -e 'install.packages(c("quantsmooth"))'
+
+RUN	Rscript -e 'remotes::install_github("DavisBrian/SeqMeta")'
+
+RUN	Rscript -e 'remotes::install_github("bioc/SNPStats", dependencies=FALSE)' && \
+	Rscript -e 'remotes::install_github("bioc/gdsfmt", dependencies=FALSE)' && \
+	Rscript -e 'remotes::install_github("bioc/SeqVarTools")' && \
+	Rscript -e 'remotes::install_github("bioc/SeqArray")' && \
+	Rscript -e 'remotes::install_github("bioc/SNPRelate")' && \
+	Rscript -e 'remotes::install_github("bioc/GWASTools")' && \
+	Rscript -e 'remotes::install_github("bioc/GENESIS")'
+RUN	rm -rf ./* /tmp/*
+
+FROM base
+ARG RUN_CMD
+
+COPY --from=builder /usr/local/lib/R/ /usr/local/lib/R/
 
 ARG TEST="/test.sh"
 COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
