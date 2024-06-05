@@ -4,6 +4,19 @@ ARG BASE
 # BASE LAYER
 FROM $BASE as base
 
+# build-args
+ARG BASE
+ARG RUN_CMD
+ARG GIT_TAG
+ARG GIT_REV
+ARG BUILD_ARCH
+ARG BUILD_REPO
+
+LABEL org.opencontainers.image.base.digest=""
+LABEL org.opencontainers.image.base.name="$BASE"
+LABEL org.opencontainers.image.description="${RUN_CMD}"
+LABEL org.opencontainers.image.url="${BUILD_REPO}/${RUN_CMD}:${GIT_TAG}-${GIT_REV}_${BUILD_ARCH}"
+
 # shared builder and runtime dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
@@ -40,8 +53,10 @@ RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 
 
 # install GMMAT
-RUN Rscript -e 'install.packages("CompQuadForm")' && \
-    Rscript -e 'remotes::install_github("hihg-um/GMMAT", dependencies=FALSE)'
+RUN 	Rscript -e 'install.packages("CompQuadForm")' && \
+	Rscript -e 'remotes::install_github("smgogarten/SeqVarTools")' && \
+	Rscript -e 'remotes::install_github("smgogarten/SeqArray")' && \
+	Rscript -e 'remotes::install_github("hihg-um/GMMAT", dependencies=FALSE)'
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM base

@@ -10,10 +10,23 @@ RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	make r-base r-base-dev \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm -rf /tmp/*
+
 #------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM base
+
+# build-args
+ARG BASE
 ARG RUN_CMD
+ARG GIT_TAG
+ARG GIT_REV
+ARG BUILD_ARCH
+ARG BUILD_REPO
+
+LABEL org.opencontainers.image.base.digest=""
+LABEL org.opencontainers.image.base.name="$base"
+LABEL org.opencontainers.image.description="${RUN_CMD}"
+LABEL org.opencontainers.image.url="${BUILD_REPO}/${RUN_CMD}:${GIT_TAG}-${GIT_REV}_${BUILD_ARCH}"
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \

@@ -22,7 +22,19 @@ RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM $BASE
+
+# build-args
+ARG BASE
 ARG RUN_CMD
+ARG GIT_TAG
+ARG GIT_REV
+ARG BUILD_ARCH
+ARG BUILD_REPO
+
+LABEL org.opencontainers.image.base.digest=""
+LABEL org.opencontainers.image.base.name="$BASE"
+LABEL org.opencontainers.image.description="${RUN_CMD}"
+LABEL org.opencontainers.image.url="${BUILD_REPO}/${RUN_CMD}:${GIT_TAG}-${GIT_REV}_${BUILD_ARCH}"
 
 # runtime only dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \

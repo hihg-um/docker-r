@@ -4,9 +4,23 @@ ARG BASE
 # BASE LAYER
 FROM $BASE as base
 
+# build-args
+ARG BASE
+ARG RUN_CMD
+ARG GIT_TAG
+ARG GIT_REV
+ARG BUILD_ARCH
+ARG BUILD_REPO
+
+LABEL org.opencontainers.image.base.digest=""
+LABEL org.opencontainers.image.base.name="$BASE"
+LABEL org.opencontainers.image.description="${RUN_CMD}"
+LABEL org.opencontainers.image.url="${BUILD_REPO}/${RUN_CMD}:${GIT_TAG}-${GIT_REV}_${BUILD_ARCH}"
+
 # shared builder and runtime dependencies
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
 	apt-get install -y --no-install-recommends --no-install-suggests \
+	libsuperlu6 \
 	r-cran-data.table r-cran-lattice r-cran-matrix \
 	r-cran-optparse r-cran-rcpp r-cran-rcppparallel \
 	r-cran-rhpcblasctl \
@@ -44,21 +58,7 @@ RUN R CMD INSTALL SAIGE
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM base
-ARG RUN_CMD
-
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
-ENV OMP_NUM_THREADS=1
-
-# runtime only dependencies
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
-	apt-get install -y --no-install-recommends --no-install-suggests \
-	libsuperlu6 \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
-
 COPY --chmod=0555 --from=builder /SAIGE/extdata/*.R /usr/local/bin/
-
 COPY --from=builder /usr/local/lib/R /usr/local/lib/R
 
 ARG TEST="/test.sh"
