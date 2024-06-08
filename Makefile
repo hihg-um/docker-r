@@ -1,31 +1,46 @@
 # SPDX-License-Identifier: GPL-2.0
 
+IMAGE_REPO ?=
 ORG_NAME ?= hihg-um
 OS_BASE ?= ubuntu
 OS_VER ?= 24.04
 
-IMAGE_REPO ?= ghcr.io
-
 #TOOLS := genesis gmmat prosper prsice saige seqmeta
 TOOLS := genesis prosper prsice saige seqmeta
 
-GIT_TAG = $(shell git describe --tags --exact-match)
-GIT_REV = $(shell git describe --broken --dirty --all --long | \
-		sed "s,heads/,," | sed "s,tags/,," | \
-		sed "s,remotes/pull/.*/,," )
-GIT_REPO_TAIL = $(patsubst docker-%,%,$(shell basename \
-		`git remote --verbose | grep origin | grep fetch | \
-		cut -f2 | cut -d ' ' -f1` | sed 's/.git//'))
-GIT_SYNC ?= ($(shell git fetch 2>&1 && git diff @{upstream} 2>&1),)
+ifneq ($(IMAGE_REPO),)
+    DOCKER_REPO := $(IMAGE_REPO)/$(ORG_NAME)
+else
+    DOCKER_REPO := $(ORG_NAME)
+endif
 
-DOCKER_BUILD_OPTS ?= "--progress=plain"
-DOCKER_BUILD_TIME := "$(shell date -u)"
-DOCKER_ARCH = $(shell uname -m)_$(shell uname -s | tr '[:upper:]' '[:lower:]')
-DOCKER_TAG ?= $(GIT_REV)_$(DOCKER_ARCH)
+GIT_REPO := $(shell git remote get-url origin | sed 's,git@,,' | sed 's,:,/,')
+GIT_REPO_TAIL := $(shell basename $(GIT_REPO) | sed 's/.git//' | \
+			sed 's/docker-//')
+GIT_TAG_HEAD ?= $(shell git describe --exact-match --tags --dirty)
+GIT_TAG_LAST ?= $(shell git describe --abbrev=0 --always --tags)
 
-DOCKER_BASE= $(ORG_NAME)/$(GIT_REPO_TAIL):$(DOCKER_TAG)
+ifeq ($(GIT_TAG_HEAD),$(GIT_TAG_LAST))
+        GIT_LATEST := true
+        GIT_TAG := $(GIT_TAG_HEAD)
+        GIT_REV := $(shell git log -1 --pretty=format:%h)
+        DOCKER_TAG := $(GIT_TAG)
+else
+        GIT_TAG := $(GIT_TAG_LAST)
+        GIT_CNT := $(shell git rev-list $(GIT_TAG)..HEAD --count)
+        GIT_REV := $(shell git describe --broken --dirty --all --long | \
+			sed "s,heads/,," | sed "s,tags/,," | \
+			sed "s,remotes/pull/.*/,,")
+        DOCKER_TAG := $(GIT_REV)
+endif
+
+DOCKER_BASE := $(DOCKER_REPO)/$(GIT_REPO_TAIL):$(DOCKER_TAG)
 DOCKER_IMAGES := $(TOOLS:=\:$(DOCKER_TAG))
-DOCKER_IMAGES_TEST = $(DOCKER_IMAGES)
+DOCKER_IMAGES_TEST := $(DOCKER_IMAGES)
+
+DOCKER_BUILD_TIME := "$(shell date -u)"
+DOCKER_BUILD_OPTS ?= "--progress=plain"
+
 SIF_IMAGES := $(TOOLS:=_$(DOCKER_TAG).sif)
 
 IMAGE_TEST := /test.sh
@@ -39,14 +54,10 @@ help:
 	@echo "         apptainer apptainer_clean apptainer_distclean apptainer_test"
 	@echo
 	@echo "Docker container(s):"
-	@for f in $(DOCKER_IMAGES); do \
-		printf "\t$$f\n"; \
-	done
+	@for f in $(DOCKER_IMAGES); do printf "\t$$f\n"; done
 	@echo
 	@echo "Apptainer(s):"
-	@for f in $(SIF_IMAGES); do \
-		printf "\t$$f\n"; \
-	done
+	@for f in $(SIF_IMAGES); do printf "\t$$f\n"; done
 	@echo
 
 all: clean build test
@@ -63,61 +74,53 @@ test: docker_test apptainer_test
 docker: docker_base $(TOOLS)
 
 $(TOOLS):
-	@echo "Building Docker container: $(ORG_NAME)/$@:$(DOCKER_TAG)"
+	@echo "Building Docker container: $(DOCKER_REPO)/$@:$(DOCKER_TAG)"
 	@docker build \
 		$(DOCKER_BUILD_OPTS) \
 		-f Dockerfile.$@ \
-		-t $(ORG_NAME)/$@:$(DOCKER_TAG) \
+		-t $(DOCKER_REPO)/$@:$(DOCKER_TAG) \
 		--build-arg BASE=$(DOCKER_BASE) \
 		--build-arg RUN_CMD=$@ \
-		--build-arg GIT_REV=$(GIT_REV) \
-		--build-arg GIT_TAG=$(GIT_TAG) \
-		--build-arg BUILD_ARCH=$(DOCKER_ARCH) \
-		--build-arg BUILD_REPO=$(IMAGE_REPO)/$(ORG_NAME) \
-		--build-arg BUILD_TIME=$(DOCKER_BUILD_TIME) \
+		--build-arg BUILD_REPO=$(DOCKER_REPO)/$@:$(DOCKER_TAG) \
 		.
-	$(if $(GIT_SYNC),, \
-		docker tag $(ORG_NAME)/$@:$(DOCKER_TAG) $(ORG_NAME)/$@:latest)
+	$(if $(GIT_LATEST), \
+		@docker tag \
+		$(DOCKER_REPO)/$@:$(DOCKER_TAG) $(DOCKER_REPO)/$@:latest)
 
 docker_base:
 	@echo "Building Docker base: $(DOCKER_BASE)"
 	@docker build -t $(DOCKER_BASE) \
 		$(DOCKER_BUILD_OPTS) \
 		--build-arg BASE=$(OS_BASE):$(OS_VER) \
+		--build-arg GIT_REPO=$(GIT_REPO) \
 		--build-arg GIT_REV=$(GIT_REV) \
 		--build-arg GIT_TAG=$(GIT_TAG) \
-		--build-arg BUILD_ARCH=$(DOCKER_ARCH) \
-		--build-arg BUILD_REPO=$(IMAGE_REPO)/$(ORG_NAME) \
+		--build-arg BUILD_REPO=$(DOCKER_BASE) \
 		--build-arg BUILD_TIME=$(DOCKER_BUILD_TIME) \
-		--build-arg URL_NAME=$(GIT_REPO_TAIL) \
 		.
 	@docker inspect $(DOCKER_BASE)
 
 docker_clean:
 	@docker builder prune -f 1> /dev/null 2>& 1
 	@for f in $(TOOLS); do \
-		docker rmi -f $(ORG_NAME)/$$f:$(DOCKER_TAG) 1> /dev/null 2>& 1; \
+		docker rmi -f $(DOCKER_REPO)/$$f:$(DOCKER_TAG) 1> /dev/null 2>& 1; \
 	done
 	@docker rmi -f $(DOCKER_BASE) 1> /dev/null 2>& 1
 
 $(DOCKER_IMAGES_TEST):
 	@echo
-	@echo "Testing Docker container: $(ORG_NAME)/$@"
+	@echo "Testing Docker container: $(DOCKER_REPO)/$@"
 	@docker run -t \
-		-v /etc/passwd:/etc/passwd:ro \
-		-v /etc/group:/etc/group:ro \
 		--entrypoint=$(IMAGE_TEST) \
-		--user=$(shell echo `id -u`):$(shell echo `id -g`) \
-		$(ORG_NAME)/$@
+		$(DOCKER_REPO)/$@
 
 docker_test: $(DOCKER_IMAGES_TEST)
 
 docker_release:
-	@for f in $(GIT_REPO_TAIL):$(DOCKER_TAG) $(DOCKER_IMAGES); do \
-		docker tag $(ORG_NAME)/$$f \
-			$(IMAGE_REPO)/$(ORG_NAME)/$$f; \
-		docker push $(IMAGE_REPO)/$(ORG_NAME)/$$f; \
-	done
+	$(if $(GIT_LATEST), \
+		for f in $(GIT_REPO_TAIL):$(DOCKER_TAG) $(DOCKER_IMAGES); do \
+			docker push $(DOCKER_REPO)/$$f; done, \
+		$(info "Cannot push untagged build: $(GIT_TAG):$(GIT_REV)"))
 
 # Apptainer
 apptainer: $(SIF_IMAGES)
@@ -125,7 +128,7 @@ apptainer: $(SIF_IMAGES)
 $(SIF_IMAGES):
 	@for f in $(DOCKER_IMAGES); do \
 		echo "Building Apptainer: $@"; \
-		apptainer pull docker-daemon:$(ORG_NAME)/$$f; \
+		apptainer pull docker-daemon:$(DOCKER_REPO)/$$f; \
 	done
 
 apptainer_clean:
@@ -135,7 +138,6 @@ apptainer_clean:
 			rm -f $$f; \
 		fi \
 	done
-	@apptainer cache clean
 
 apptainer_distclean:
 	@rm -f *.sif

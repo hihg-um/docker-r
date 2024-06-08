@@ -4,6 +4,16 @@ ARG BASE
 # BASE LAYER
 FROM ubuntu:22.04 as base
 
+# build-args
+ARG BASE
+ARG RUN_CMD
+ARG BUILD_REPO
+
+LABEL org.opencontainers.image.base.digest=""
+LABEL org.opencontainers.image.base.name="$BASE"
+LABEL org.opencontainers.image.description="HIHG ${RUN_CMD}"
+LABEL org.opencontainers.image.url="${BUILD_REPO}"
+
 # builder only dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
