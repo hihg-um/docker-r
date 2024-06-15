@@ -118,8 +118,9 @@ docker_test: $(DOCKER_IMAGES_TEST)
 
 docker_release:
 	$(if $(GIT_LATEST), \
-		for f in $(GIT_REPO_TAIL):$(DOCKER_TAG) $(DOCKER_IMAGES); do \
-			docker push $(DOCKER_REPO)/$$f; done, \
+		for f in $(GIT_REPO_TAIL) $(TOOLS); do \
+			docker push $(DOCKER_REPO)/$$f:$(DOCKER_TAG); \
+			docker push $(DOCKER_REPO)/$$f:latest; done, \
 		$(info "Cannot push untagged build: $(GIT_TAG):$(GIT_REV)"))
 
 # Apptainer
@@ -127,7 +128,7 @@ apptainer: $(SIF_IMAGES)
 
 $(SIF_IMAGES):
 	@for f in $(DOCKER_IMAGES); do \
-		echo "Building Apptainer: $@"; \
+		echo "Building Apptainer: $$f"; \
 		apptainer pull docker-daemon:$(DOCKER_REPO)/$$f; \
 	done
 
