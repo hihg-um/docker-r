@@ -19,10 +19,7 @@ FROM $BASE
 ARG BASE
 ARG RUN_CMD
 ARG BUILD_REPO
-
-LABEL org.opencontainers.image.base.name="${BASE}"
-LABEL org.opencontainers.image.description="R library: ${RUN_CMD}"
-LABEL org.opencontainers.image.url="${BUILD_REPO}"
+ARG BUILD_TIME
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
@@ -40,7 +37,12 @@ RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 RUN Rscript -e 'install.packages(c("bigassertr", "bigreadr", "cvAUC", "SuperLearner"))'
 
 COPY --chmod=0555 --from=builder /PROSPER/scripts /usr/local/bin
+COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
 
-ARG TEST="/test.sh"
-COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
+LABEL org.opencontainers.image.base.digest=""
+LABEL org.opencontainers.image.base.name="${BASE}"
+LABEL org.opencontainers.image.created="$BUILD_TIME"
+LABEL org.opencontainers.image.description="PROSPER R library and dependencies"
+LABEL org.opencontainers.image.title="HIHG: ${RUN_CMD}"
+LABEL org.opencontainers.image.url="${BUILD_REPO}"
 # ------------------------------------------------------------------------------

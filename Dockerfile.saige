@@ -4,15 +4,6 @@ ARG BASE
 # BASE LAYER
 FROM $BASE as base
 
-# build-args
-ARG BASE
-ARG RUN_CMD
-ARG BUILD_REPO
-
-LABEL org.opencontainers.image.base.name="${BASE}"
-LABEL org.opencontainers.image.description="R library: ${RUN_CMD}"
-LABEL org.opencontainers.image.url="${BUILD_REPO}"
-
 # shared builder and runtime dependencies
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
 	apt-get install -y --no-install-recommends --no-install-suggests \
@@ -54,9 +45,21 @@ RUN R CMD INSTALL SAIGE
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM base
+
+ARG BASE
+ARG RUN_CMD
+ARG BUILD_REPO
+ARG BUILD_TIME
+
 COPY --chmod=0555 --from=builder /SAIGE/extdata/*.R /usr/local/bin/
 COPY --from=builder /usr/local/lib/R /usr/local/lib/R
 
-ARG TEST="/test.sh"
-COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
+COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
+
+LABEL org.opencontainers.image.base.digest=""
+LABEL org.opencontainers.image.base.name="${BASE}"
+LABEL org.opencontainers.image.created="${BUILD_TIME}"
+LABEL org.opencontainers.image.description="SAIGE R library and dependencies"
+LABEL org.opencontainers.image.title="HIHG: ${RUN_CMD}"
+LABEL org.opencontainers.image.url="${BUILD_REPO}"
 # ------------------------------------------------------------------------------

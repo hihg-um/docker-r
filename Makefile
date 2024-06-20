@@ -17,7 +17,7 @@ endif
 GIT_REPO := $(shell git remote get-url origin | sed 's,git@,,' | sed 's,:,/,')
 GIT_REPO_TAIL := $(shell basename $(GIT_REPO) | sed 's/.git//' | \
 			sed 's/docker-//')
-GIT_TAG_HEAD ?= $(shell git describe --exact-match --tags --dirty)
+GIT_TAG_HEAD ?= $(shell git describe --exact-match --tags --dirty 2>/dev/null)
 GIT_TAG_LAST ?= $(shell git describe --abbrev=0 --always --tags)
 
 ifeq ($(GIT_TAG_HEAD),$(GIT_TAG_LAST))
@@ -82,6 +82,7 @@ $(TOOLS):
 		--build-arg BASE=$(DOCKER_BASE) \
 		--build-arg RUN_CMD=$@ \
 		--build-arg BUILD_REPO=$(DOCKER_REPO)/$@:$(DOCKER_TAG) \
+		--build-arg BUILD_TIME=$(DOCKER_BUILD_TIME) \
 		.
 	$(if $(GIT_LATEST), \
 		@docker tag \
@@ -96,7 +97,6 @@ docker_base:
 		--build-arg GIT_REV=$(GIT_REV) \
 		--build-arg GIT_TAG=$(GIT_TAG) \
 		--build-arg BUILD_REPO=$(DOCKER_BASE) \
-		--build-arg BUILD_TIME=$(DOCKER_BUILD_TIME) \
 		.
 	@docker inspect $(DOCKER_BASE)
 

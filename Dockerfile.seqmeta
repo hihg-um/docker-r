@@ -4,17 +4,6 @@ ARG BASE
 # BASE LAYER
 FROM ubuntu:22.04 as base
 
-# build-args
-ARG BASE
-ARG RUN_CMD
-ARG BUILD_REPO
-
-LABEL org.opencontainers.image.base.digest=""
-LABEL org.opencontainers.image.base.name="$BASE"
-LABEL org.opencontainers.image.description="HIHG ${RUN_CMD}"
-LABEL org.opencontainers.image.url="${BUILD_REPO}"
-
-# builder only dependencies
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
 	make r-base r-base-dev \
@@ -28,10 +17,8 @@ FROM base
 # build-args
 ARG BASE
 ARG RUN_CMD
-ARG GIT_TAG
-ARG GIT_REV
-ARG BUILD_ARCH
 ARG BUILD_REPO
+ARG BUILD_TIME
 
 LABEL org.opencontainers.image.base.digest=""
 LABEL org.opencontainers.image.base.name="$base"
@@ -48,6 +35,12 @@ RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 RUN Rscript -e 'install.packages(c("bdsmatrix", "CompQuadForm", "coxme"))' && \ 
 	Rscript -e 'remotes::install_github("DavisBrian/seqMeta")'
 
-ARG TEST="/test.sh"
-COPY --chmod=0555 src/test/$RUN_CMD.sh ${TEST}
+COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
+
+LABEL org.opencontainers.image.base.digest=""
+LABEL org.opencontainers.image.base.name="$BASE"
+LABEL org.opencontainers.image.created="${BUILD_TIME}"
+LABEL org.opencontainers.image.description="SeqMeta R library and dependencies"
+LABEL org.opencontainers.image.title="HIHG: ${RUN_CMD}"
+LABEL org.opencontainers.image.url="${BUILD_REPO}"
 # ------------------------------------------------------------------------------
