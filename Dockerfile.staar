@@ -1,0 +1,206 @@
+# SPDX-License-Identifier: GPL-2.0
+ARG BASE
+# ------------------------------------------------------------------------------
+FROM $BASE as base
+
+# common builder and runtime dependencies
+# explicit MetaSTAAR dependencies, see:
+#    https://github.com/xihaoli/MetaSTAAR/blob/main/README.md
+# [MetaSTAAR links to R packages]
+# Rcpp, RcppArmadillo and STAAR
+# [and also imports R packages]
+# Rcpp, STAAR, Matrix, dplyr, expm, MASS
+
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		gfortran \
+		libboost-filesystem1.83.0 \
+		liblapack3 \
+		libblas3 \
+		libeigen3-dev \
+		libbz2-1.0 \
+		libdeflate0 \
+		liblzma5 \
+		libuv1 \
+		libzstd1 \
+		zlib1g \
+		r-cran-bit \
+		r-cran-bit64 \
+		r-cran-bitops \
+		r-cran-blob \
+		r-cran-boot \
+		r-cran-brio \
+		r-cran-data.table \
+		r-cran-dbi \
+		r-cran-dplyr \
+		r-cran-expm \
+		r-cran-forcats \
+		r-cran-foreach \
+		r-cran-formatr \
+		r-cran-futile.logger \
+		r-cran-futile.options \
+		r-cran-genetics \
+		r-cran-glmnet \
+		r-cran-igraph \
+		r-cran-iterators \
+		r-cran-jomo \
+		r-cran-lambda.r \
+		r-cran-lattice \
+		r-cran-lifecycle \
+		r-cran-lmtest \
+		r-cran-knitr \
+		r-cran-mass \
+		r-cran-matrix \
+		r-cran-matrixmodels \
+		r-cran-memoise \
+		r-cran-mass \
+		r-cran-mice \
+		r-cran-minqa \
+		r-cran-mitml \
+		r-cran-mgcv \
+		r-cran-nloptr \
+		r-cran-nnet \
+		r-cran-numderiv \
+		r-cran-optparse \
+		r-cran-ordinal \
+		r-cran-pan \
+		r-cran-pillar \
+		r-cran-plogr \
+		r-cran-progress \
+		r-cran-purrr \
+		r-cran-quantreg \
+		r-cran-qqman \
+		r-cran-quantreg \
+		r-cran-rcpp \
+		r-cran-rcpparmadillo \
+		r-cran-rcppeigen \
+		r-cran-rcurl \
+		r-cran-readr \
+		r-cran-reshape2 \
+		r-cran-rlang \
+		r-cran-rpart \
+		r-cran-rsqlite \
+		r-cran-r.utils \
+		r-cran-sandwich \
+		r-cran-shape \
+		r-cran-snow \
+		r-cran-sparsem \
+		r-cran-stringr \
+		r-cran-survival \
+		r-cran-testthat \
+		r-cran-tidyr \
+		r-cran-tidyverse \
+		r-cran-tibble \
+		r-cran-tzdb \
+		r-cran-ucminf \
+		r-cran-vctrs \
+		r-cran-vroom \
+		r-cran-withr \
+		r-cran-zoo \
+		r-cran-biocmanager \
+		r-bioc-biocversion \
+		r-bioc-biobase \
+		r-bioc-biocgenerics \
+		r-bioc-biocparallel \
+		r-bioc-biostrings \
+		r-bioc-dnacopy \
+		r-bioc-genomeinfodbdata \
+		r-bioc-genomeinfodb \
+		r-bioc-genomicranges \
+		r-bioc-iranges \
+		r-bioc-rbgl \
+		r-bioc-s4vectors \
+		r-bioc-snpstats \
+		r-bioc-xvector \
+		r-bioc-zlibbioc \
+		r-cran-fansi \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+# ------------------------------------------------------------------------------
+# BUILDER LAYER
+FROM base as builder
+
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		autoconf \
+		automake \
+		build-essential \
+		cmake \
+		gcc \
+		libboost-filesystem1.83-dev \
+		liblapack-dev \
+		libblas-dev \
+		libbz2-dev \
+		libdeflate-dev \
+		liblzma-dev \
+		libuv1-dev \
+		libzstd-dev \
+		zlib1g-dev \
+		make \
+		pkg-config \
+		r-cran-codetools \
+		r-cran-remotes
+
+WORKDIR /usr/src
+
+RUN Rscript -e 'remotes::install_github("cran/backports")' && \
+	Rscript -e 'remotes::install_github("cran/withr")' && \
+	Rscript -e 'remotes::install_github("cran/fansi")' && \
+	Rscript -e 'remotes::install_github("cran/stringi")' && \
+	Rscript -e 'remotes::install_github("cran/tidyselect")' && \
+	Rscript -e 'remotes::install_github("cran/broom")' && \
+	Rscript -e 'remotes::install_github("cran/processx")' && \
+	Rscript -e 'remotes::install_github("cran/callr")' && \
+	Rscript -e 'remotes::install_github("cran/data.table")' && \
+	Rscript -e 'remotes::install_github("cran/cli")' && \
+	Rscript -e 'remotes::install_github("cran/formula.tools")' && \
+	Rscript -e 'remotes::install_github("cran/operator.tools")' && \
+	Rscript -e 'remotes::install_github("cran/logistf")' && \
+	Rscript -e 'remotes::install_github("cran/lme4")' && \
+	Rscript -e 'remotes::install_github("cran/dplyr")' && \
+	Rscript -e 'remotes::install_github("cran/jomo")' && \
+	Rscript -e 'remotes::install_github("cran/mitml")' && \
+	Rscript -e 'remotes::install_github("cran/mice")' && \
+	Rscript -e 'remotes::install_github("cran/pkgbuild")'
+
+RUN	Rscript -e 'remotes::install_github("cran/GWASExactHW")' \
+	Rscript -e 'remotes::install_github("smgogarten/SeqVarTools")' && \
+	Rscript -e 'remotes::install_github("smgogarten/SeqArray")' && \
+	Rscript -e 'remotes::install_github("smgogarten/GWASTools")' && \
+	Rscript -e 'remotes::install_github("smgogarten/SNPRelate")' \
+	Rscript -e 'remotes::install_github("bioc/gdsfmt")' && \
+	Rscript -e 'remotes::install_github("bioc/quantsmooth")'
+#	Rscript -e 'remotes::install_github("bioc/GENESIS")'
+
+RUN Rscript -e 'install.packages(c("formula.tools", \
+		"GWASExactHW", "logistf", "operator.tools"))' && \
+	Rscript -e 'BiocManager::install(c("gdsfmt", "GWASTools", \
+		"quantsmooth", "SeqArray", "SeqVarTools", "SNPRelate"))' && \
+	Rscript -e 'BiocManager::install("GENESIS")'
+
+RUN	Rscript -e 'remotes::install_github("hihg-um/GMMAT")'
+
+RUN	Rscript -e 'remotes::install_github("xihaoli/STAAR")' && \
+	Rscript -e 'remotes::install_github("xihaoli/MultiSTAAR")' && \
+	Rscript -e 'remotes::install_github("xihaoli/MetaSTAAR")'
+
+# RUNTIME LAYER
+FROM base
+
+ARG BASE
+ARG RUN_CMD
+ARG BUILD_REPO
+ARG BUILD_TIME
+
+COPY --chmod=0555 --from=builder /usr/local/lib/R /usr/local/lib/R
+COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
+COPY --chmod=0555 src/test/${RUN_CMD}.R /
+
+LABEL org.opencontainers.image.base.digest=""
+LABEL org.opencontainers.image.base.name="${BASE}"
+LABEL org.opencontainers.image.created="${BUILD_TIME}"
+LABEL org.opencontainers.image.description="STAAR R library and dependencies"
+LABEL org.opencontainers.image.title="HIHG: ${RUN_CMD}"
+LABEL org.opencontainers.image.url="${BUILD_REPO}"
+# ------------------------------------------------------------------------------
