@@ -17,27 +17,30 @@ RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 FROM base as builder
 
 # builder only dependencies
-RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
-	apt -y install --no-install-recommends --no-install-suggests \
-	libdeflate-dev libzstd-dev liblzma-dev r-cran-remotes \
-	r-cran-biocmanager \
-	r-cran-devtools \
-	r-cran-data.table \
-	r-cran-domc \
-	r-cran-foreach \
-	r-cran-matrix \
-	r-cran-rcpparmadillo \
-	r-cran-testthat \
-	r-bioc-biobase \
-	r-bioc-biocgenerics \
-	r-bioc-biocparallel \
-	r-bioc-biostrings \
-	r-bioc-iranges \
-	r-bioc-genomeinfodb \
-	r-bioc-genomicranges \
-	r-bioc-s4vectors && \
-	rm -rf /var/lib/apt/lists/* && rm -rf /tmp/*
-
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		libdeflate-dev \
+		libzstd-dev \
+		liblzma-dev \
+		r-cran-remotes \
+		r-cran-biocmanager \
+		r-cran-devtools \
+		r-cran-data.table \
+		r-cran-domc \
+		r-cran-foreach \
+		r-cran-matrix \
+		r-cran-rcpparmadillo \
+		r-cran-testthat \
+		r-bioc-biobase \
+		r-bioc-biocgenerics \
+		r-bioc-biocparallel \
+		r-bioc-biostrings \
+		r-bioc-iranges \
+		r-bioc-genomeinfodb \
+		r-bioc-genomicranges \
+		r-bioc-s4vectors \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 # install GMMAT
 RUN 	Rscript -e 'install.packages("CompQuadForm")' && \

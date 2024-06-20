@@ -5,30 +5,46 @@ ARG BASE
 FROM $BASE as base
 
 # shared builder and runtime dependencies
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
-	apt-get install -y --no-install-recommends --no-install-suggests \
-	libsuperlu6 \
-	r-cran-data.table r-cran-lattice r-cran-matrix \
-	r-cran-optparse r-cran-rcpp r-cran-rcppparallel \
-	r-cran-rhpcblasctl \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		libsuperlu6 \
+		r-cran-data.table \
+		r-cran-lattice \
+		r-cran-matrix \
+		r-cran-optparse \
+		r-cran-rcpp \
+		r-cran-rcppparallel \
+		r-cran-rhpcblasctl \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 # ------------------------------------------------------------------------------
 # BUILDER LAYER
 FROM base as builder
 
 # builder only dependencies
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
-	apt-get install -y --no-install-recommends --no-install-suggests \
-	cmake git g++ \
-	liblzma-dev libsavvy-dev libshrinkwrap-dev \
-	libsuperlu-dev libzstd-dev zlib1g-dev \
-	r-cran-biocmanager r-bioc-biocversion r-cran-bh \
-	r-cran-dplyr r-cran-qlcmatrix r-cran-r.utils \
-	r-cran-rcpparmadillo r-cran-rcppeigen r-cran-rspectra \
-	r-cran-rsqlite \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		cmake \
+		git \
+		g++ \
+		liblzma-dev \
+		libsavvy-dev \
+		libshrinkwrap-dev \
+		libsuperlu-dev \
+		libzstd-dev \
+		zlib1g-dev \
+		r-cran-biocmanager \
+		r-bioc-biocversion \
+		r-cran-bh \
+		r-cran-dplyr \
+		r-cran-qlcmatrix \
+		r-cran-r.utils \
+		r-cran-rcpparmadillo \
+		r-cran-rcppeigen \
+		r-cran-rspectra \
+		r-cran-rsqlite \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 # pick up remaining bioconductor dependencies not packaged w/ ubuntu 
 RUN Rscript -e 'BiocManager::install("SPAtest")' && \
@@ -53,7 +69,6 @@ ARG BUILD_TIME
 
 COPY --chmod=0555 --from=builder /SAIGE/extdata/*.R /usr/local/bin/
 COPY --from=builder /usr/local/lib/R /usr/local/lib/R
-
 COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
 
 LABEL org.opencontainers.image.base.digest=""

@@ -4,11 +4,29 @@ ARG BASE
 # BASE LAYER
 FROM ubuntu:22.04 as base
 
-RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
-	apt -y install --no-install-recommends --no-install-suggests \
-	make r-base r-base-dev \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+RUN apt -y update -qq && apt -y upgrade && \
+	DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		r-base \
+		r-cran-lattice \
+		r-cran-nlme \
+		r-cran-matrix \
+		r-cran-survival \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+FROM base as builder
+
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		make \
+		r-base-dev \
+		r-cran-remotes \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+RUN Rscript -e 'install.packages(c("bdsmatrix", "CompQuadForm", "coxme"))' && \
+	Rscript -e 'remotes::install_github("DavisBrian/seqMeta")'
 
 #------------------------------------------------------------------------------
 # RUNTIME LAYER
@@ -20,21 +38,7 @@ ARG RUN_CMD
 ARG BUILD_REPO
 ARG BUILD_TIME
 
-LABEL org.opencontainers.image.base.digest=""
-LABEL org.opencontainers.image.base.name="$base"
-LABEL org.opencontainers.image.description="${RUN_CMD}"
-LABEL org.opencontainers.image.url="${BUILD_REPO}/${RUN_CMD}:${GIT_TAG}-${GIT_REV}_${BUILD_ARCH}"
-
-RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
-	apt -y install --no-install-recommends --no-install-suggests \
-	r-cran-lattice r-cran-nlme r-cran-matrix \
-	r-cran-remotes r-cran-survival \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
-
-RUN Rscript -e 'install.packages(c("bdsmatrix", "CompQuadForm", "coxme"))' && \ 
-	Rscript -e 'remotes::install_github("DavisBrian/seqMeta")'
-
+COPY --chmod=0555 --from=builder /usr/local/lib/R /usr/local/lib/R
 COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
 
 LABEL org.opencontainers.image.base.digest=""

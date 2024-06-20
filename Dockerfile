@@ -14,8 +14,13 @@ ENV TZ="UTC"
 
 RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
 	apt -y install --no-install-recommends --no-install-suggests \
-	apt-utils bzip2 curl make\
-	r-base r-base-dev && \
+		apt-utils \
+		bzip2 \
+		curl \
+		make \
+		r-base \
+		r-base-dev \
+	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 LABEL org.opencontainers.image.authors="kms309@miami.edu,sxd1425@miami.edu"

@@ -11,24 +11,53 @@ ARG BUILD_REPO
 ARG BUILD_TIME
 
 # runtime dependencies
-RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
-	apt -y install --no-install-recommends --no-install-suggests \
-	r-cran-data.table r-cran-formatr r-cran-futile.logger \
-	r-cran-futile.options r-cran-genetics r-cran-glmnet \
-	r-cran-igraph r-cran-jomo r-cran-lambda.r \
-	r-cran-lmtest r-cran-optparse r-cran-ordinal \
-	r-cran-matrix r-cran-matrixmodels r-cran-mice \
-	r-cran-mitml r-cran-pan r-cran-plogr \
-	r-cran-qqman r-cran-quantreg r-cran-r.utils \
-	r-cran-rcurl r-cran-reshape2 r-cran-rsqlite \
-	r-cran-sandwich r-cran-shape r-cran-snow \
-	r-cran-sparsem r-cran-tidyverse r-cran-ucminf \
-	r-cran-biocmanager r-bioc-biocversion r-bioc-biobase \
-	r-bioc-biocparallel r-bioc-biostrings r-bioc-dnacopy \
-	r-bioc-genomeinfodbdata r-bioc-genomeinfodb r-bioc-genomicranges \
-	r-bioc-iranges r-bioc-s4vectors r-bioc-snpstats r-bioc-xvector \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		r-cran-data.table \
+		r-cran-formatr \
+		r-cran-futile.logger \
+		r-cran-futile.options \
+		r-cran-genetics \
+		r-cran-glmnet \
+		r-cran-igraph \
+		r-cran-jomo \
+		r-cran-lambda.r \
+		r-cran-lmtest \
+		r-cran-optparse \
+		r-cran-ordinal \
+		r-cran-matrix \
+		r-cran-matrixmodels \
+		r-cran-mice \
+		r-cran-mitml \
+		r-cran-pan \
+		r-cran-plogr \
+		r-cran-qqman \
+		r-cran-quantreg \
+		r-cran-r.utils \
+		r-cran-rcurl \
+		r-cran-reshape2 \
+		r-cran-rsqlite \
+		r-cran-sandwich \
+		r-cran-shape \
+		r-cran-snow \
+		r-cran-sparsem \
+		r-cran-tidyverse \
+		r-cran-ucminf \
+		r-cran-biocmanager \
+		r-bioc-biocversion \
+		r-bioc-biobase \
+		r-bioc-biocparallel \
+		r-bioc-biostrings \
+		r-bioc-dnacopy \
+		r-bioc-genomeinfodbdata \
+		r-bioc-genomeinfodb \
+		r-bioc-genomicranges \
+		r-bioc-iranges \
+		r-bioc-s4vectors \
+		r-bioc-snpstats \
+		r-bioc-xvector \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 RUN Rscript -e 'install.packages(c("formula.tools", \
 		"GWASExactHW", "logistf", "operator.tools"))' && \
