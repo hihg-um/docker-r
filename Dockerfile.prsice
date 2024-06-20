@@ -1,45 +1,42 @@
 # SPDX-License-Identifier: GPL-2.0
 ARG BASE
-# ------------------------------------------------------------------------------
-# BUILDER LAYER
-FROM $BASE as builder
-
-# builder only dependencies
-# PRSice currently only compiles on Ubuntu<20.04
+FROM $BASE as base
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
-		cmake \
-		git \
 		libpthread-stubs0-dev \
-		zlib1g-dev \
-	&& \
-	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
-
-RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
-	cd PRSice && \
-	mkdir build && \
-	cd build && \
-	cmake ../ && \
-	make
-# ------------------------------------------------------------------------------
-# RUNTIME LAYER
-FROM $BASE
-
-# build-args
-ARG BASE
-ARG RUN_CMD
-ARG BUILD_REPO
-ARG BUILD_TIME
-
-# runtime only dependencies
-RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
-	--no-install-recommends --no-install-suggests \
+		zlib1g \
 		r-cran-data.table \
 		r-cran-ggplot2 \
 		r-cran-optparse \
 		r-cran-rcolorbrewer \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+# ------------------------------------------------------------------------------
+# BUILDER LAYER
+FROM base as builder
+
+# builder only dependencies
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		cmake \
+		git \
+		zlib1g-dev \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
+	cd PRSice && mkdir build && cd build && \
+	cmake ../ && make
+# ------------------------------------------------------------------------------
+# RUNTIME LAYER
+FROM base
+
+# build-args
+ARG BASE
+ARG RUN_CMD
+ARG BUILD_REPO
+ARG BUILD_TIME
 
 COPY --chmod=0555 --from=builder /PRSice/bin/PRSice /usr/local/bin/PRSice
 COPY --chmod=0555 --from=builder /PRSice/PRSice.R /usr/local/bin/PRSice.R

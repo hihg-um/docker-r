@@ -4,10 +4,15 @@ ARG BASE
 # BASE LAYER
 FROM $BASE as base
 
-# shared builder and runtime dependencies
+# runtime dependencies
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
+		liblzma5 \
+		libsavvy-dev \
+		libshrinkwrap-dev \
 		libsuperlu6 \
+		libzstd1 \
+		zlib1g \
 		r-cran-data.table \
 		r-cran-lattice \
 		r-cran-matrix \
@@ -28,8 +33,6 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		git \
 		g++ \
 		liblzma-dev \
-		libsavvy-dev \
-		libshrinkwrap-dev \
 		libsuperlu-dev \
 		libzstd-dev \
 		zlib1g-dev \

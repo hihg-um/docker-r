@@ -2,17 +2,13 @@
 ARG BASE
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
-FROM $BASE
-
-# build-args
+FROM $BASE as base
 ARG BASE
-ARG RUN_CMD
-ARG BUILD_REPO
-ARG BUILD_TIME
 
 # runtime dependencies
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
+		liblzma5 \
 		r-cran-data.table \
 		r-cran-formatr \
 		r-cran-futile.logger \
@@ -59,12 +55,27 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
+FROM base as builder
+
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		liblzma-dev
+
 RUN Rscript -e 'install.packages(c("formula.tools", \
 		"GWASExactHW", "logistf", "operator.tools"))' && \
 	Rscript -e 'BiocManager::install(c("gdsfmt", "GWASTools", \
 		"quantsmooth", "SeqArray", "SeqVarTools", "SNPRelate"))' && \
 	Rscript -e 'BiocManager::install("GENESIS")'
 
+FROM base
+
+# build-args
+ARG BASE
+ARG RUN_CMD
+ARG BUILD_REPO
+ARG BUILD_TIME
+
+COPY --chmod=0555 --from=builder /usr/local/lib/R /usr/local/lib/R
 COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
 
 LABEL org.opencontainers.image.base.digest=""

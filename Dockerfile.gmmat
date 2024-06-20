@@ -5,32 +5,19 @@ ARG BASE
 FROM $BASE as base
 
 # shared builder and runtime dependencies
-RUN apt -y update -qq && apt -y upgrade && DEBIAN_FRONTEND=noninteractive \
-	apt -y install --no-install-recommends --no-install-suggests \
-	r-cran-codetools r-cran-data.table r-cran-foreach \
-	r-cran-iterators r-cran-lattice r-cran-matrix \
-	r-cran-rcpp r-cran-rcpparmadillo \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /tmp/*
-# ------------------------------------------------------------------------------
-# BUILDER LAYER
-FROM base as builder
-
-# builder only dependencies
-RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+RUN apt -y update -qq && apt -y upgrade && \
+	DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
-		libdeflate-dev \
-		libzstd-dev \
-		liblzma-dev \
-		r-cran-remotes \
-		r-cran-biocmanager \
-		r-cran-devtools \
+		libdeflate0 \
+		liblzma5 \
+		libzstd1 \
 		r-cran-data.table \
-		r-cran-domc \
 		r-cran-foreach \
+		r-cran-iterators \
+		r-cran-lattice \
 		r-cran-matrix \
+		r-cran-rcpp \
 		r-cran-rcpparmadillo \
-		r-cran-testthat \
 		r-bioc-biobase \
 		r-bioc-biocgenerics \
 		r-bioc-biocparallel \
@@ -39,6 +26,23 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-bioc-genomeinfodb \
 		r-bioc-genomicranges \
 		r-bioc-s4vectors \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+# ------------------------------------------------------------------------------
+# BUILDER LAYER
+FROM base as builder
+
+# builder only dependencies
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		libdeflate-dev \
+		liblzma-dev \
+		libzstd-dev \
+		r-cran-codetools \
+		r-cran-devtools \
+		r-cran-domc \
+		r-cran-remotes \
+		r-cran-testthat \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
