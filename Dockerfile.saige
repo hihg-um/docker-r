@@ -13,6 +13,8 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		libsuperlu6 \
 		libzstd1 \
 		zlib1g \
+		gfortran \
+		dpkg-dev \
 		r-cran-data.table \
 		r-cran-lattice \
 		r-cran-matrix \
@@ -29,13 +31,14 @@ FROM base as builder
 # builder only dependencies
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
-		cmake \
-		git \
-		g++ \
 		liblzma-dev \
 		libsuperlu-dev \
 		libzstd-dev \
 		zlib1g-dev \
+		cmake \
+		git \
+		g++ \
+		make \
 		r-cran-biocmanager \
 		r-bioc-biocversion \
 		r-cran-bh \
@@ -45,20 +48,18 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-cran-rcpparmadillo \
 		r-cran-rcppeigen \
 		r-cran-rspectra \
-		r-cran-rsqlite \
-	&& \
-	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+		r-cran-rsqlite
 
 # pick up remaining bioconductor dependencies not packaged w/ ubuntu 
-RUN Rscript -e 'BiocManager::install("SPAtest")' && \
+RUN \
+	Rscript -e 'BiocManager::install("SPAtest")' && \
 	Rscript -e 'BiocManager::install("SKAT")' && \
 	Rscript -e 'BiocManager::install("MetaSKAT")'
 
 # clone saige and remove thirdParty and configure script
 # dependencies are already installed, so no need to run configure
 RUN git clone https://github.com/saigegit/SAIGE && \
-	rm -rf SAIGE/thirdParty && \
-	rm SAIGE/configure
+	rm -rf SAIGE/thirdParty SAIGE/configure
 
 RUN R CMD INSTALL SAIGE
 # ------------------------------------------------------------------------------

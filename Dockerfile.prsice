@@ -3,6 +3,7 @@ ARG BASE
 FROM $BASE as base
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
+		libeigen3-dev \
 		libpthread-stubs0-dev \
 		zlib1g \
 		r-cran-data.table \
@@ -19,15 +20,15 @@ FROM base as builder
 # builder only dependencies
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
-		cmake \
-		git \
 		zlib1g-dev \
-	&& \
-	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+		cmake \
+		g++ \
+		git \
+		make \
+		r-cran-rcppeigen
 
 RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
-	cd PRSice && mkdir build && cd build && \
-	cmake ../ && make
+	cd PRSice && mkdir build && cd build && cmake ../ && make
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM base

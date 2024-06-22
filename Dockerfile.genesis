@@ -8,7 +8,21 @@ ARG BASE
 # runtime dependencies
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
+		libblas3 \
+		libboost-thread1.83.0 \
+		libbz2-1.0 \
+		libdeflate0 \
+		libeigen3-dev \
+		libglpk40 \
+		libicu74 \
+		liblapack3 \
 		liblzma5 \
+		libuv1 \
+		libxml2 \
+		libxml++2.6-2v5 \
+		libzstd1 \
+		zlib1g \
+		gfortran \
 		r-cran-data.table \
 		r-cran-formatr \
 		r-cran-futile.logger \
@@ -52,6 +66,7 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-bioc-s4vectors \
 		r-bioc-snpstats \
 		r-bioc-xvector \
+		r-bioc-zlibbioc \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
@@ -59,13 +74,61 @@ FROM base as builder
 
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
-		liblzma-dev
+		libblas-dev \
+		libboost1.83-all-dev \
+		libbz2-dev \
+		libdeflate-dev \
+		libglpk-dev \
+		liblapack-dev \
+		liblzma-dev \
+		libsqlitecpp-dev \
+		libuv1-dev \
+		libxml2-dev \
+		libxml++2.6-dev \
+		libzstd-dev \
+		zlib1g-dev \
+		cmake \
+		g++ \
+		make \
+		r-cran-remotes
 
-RUN Rscript -e 'install.packages(c("formula.tools", \
-		"GWASExactHW", "logistf", "operator.tools"))' && \
-	Rscript -e 'BiocManager::install(c("gdsfmt", "GWASTools", \
-		"quantsmooth", "SeqArray", "SeqVarTools", "SNPRelate"))' && \
-	Rscript -e 'BiocManager::install("GENESIS")'
+RUN \
+	Rscript -e 'install.packages(c("stringi"))' && \
+	Rscript -e 'install.packages(c("rlang"))' && \
+	Rscript -e 'install.packages(c("cli"))' && \
+	Rscript -e 'install.packages(c("crayon"))' && \
+	Rscript -e 'install.packages(c("nloptr"))' && \
+	Rscript -e 'install.packages(c("minqa"))' && \
+	Rscript -e 'install.packages(c("withr"))' && \
+	Rscript -e 'install.packages(c("fansi"))' && \
+	Rscript -e 'install.packages(c("shape"))' && \
+	Rscript -e 'install.packages(c("backports"))' && \
+	Rscript -e 'install.packages(c("GenomeInfoDb"))' && \
+	Rscript -e 'install.packages(c("SparseM"))' && \
+	Rscript -e 'install.packages(c("fastmap"))' && \
+	Rscript -e 'install.packages(c("DBI"))' && \
+	Rscript -e 'install.packages(c("data.table"))' && \
+	Rscript -e 'install.packages(c("lme4"))' && \
+	Rscript -e 'install.packages(c("tidyselect"))' && \
+	Rscript -e 'install.packages(c("broom"))' && \
+	Rscript -e 'install.packages(c("quantreg"))' && \
+	Rscript -e 'install.packages(c("cachem"))' && \
+	Rscript -e 'install.packages(c("RSQLite"))' && \
+	Rscript -e 'install.packages(c("igraph"))' && \
+	Rscript -e 'install.packages(c("operator.tools"))' && \
+	Rscript -e 'install.packages(c("formula.tools"))' && \
+	Rscript -e 'install.packages(c("GWASExactHW"))' && \
+	Rscript -e 'install.packages(c("logistf"))' && \
+	Rscript -e 'BiocManager::install(c("gdsfmt"))' && \
+	Rscript -e 'BiocManager::install(c("quantsmooth"))' && \
+	Rscript -e 'BiocManager::install(c("GWASTools"))' && \
+	Rscript -e 'BiocManager::install(c("SeqArray"))' && \
+	Rscript -e 'BiocManager::install(c("SeqVarTools"))' && \
+	Rscript -e 'BiocManager::install(c("SNPRelate"))' && \
+	Rscript -e 'BiocManager::install(c("zlibbioc"))' && \
+	Rscript -e 'BiocManager::install(c("GenomeInfoDb"))' && \
+	Rscript -e 'BiocManager::install(c("Biostrings"))' && \
+	Rscript -e 'BiocManager::install(c("hihg-um/GENESIS"))'
 
 FROM base
 
@@ -75,7 +138,7 @@ ARG RUN_CMD
 ARG BUILD_REPO
 ARG BUILD_TIME
 
-COPY --chmod=0555 --from=builder /usr/local/lib/R /usr/local/lib/R
+COPY --from=builder /usr/local/lib/R /usr/local/lib/R
 COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
 
 LABEL org.opencontainers.image.base.digest=""

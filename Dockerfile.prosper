@@ -1,29 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0
 ARG BASE
-# ------------------------------------------------------------------------------
-# BUILDER LAYER
-FROM $BASE as builder
-
-RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
-	--no-install-recommends --no-install-suggests \
-		git \
-		r-cran-rcpp \
-	&& \
-	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
-
-RUN git clone https://github.com/hihg-um/PROSPER.git
-
-RUN Rscript -e 'install.packages(c("bigassertr", "bigreadr", "cvAUC", "SuperLearner"))'
-
-# ------------------------------------------------------------------------------
-# RUNTIME LAYER
-FROM $BASE
-
-# build-args
-ARG BASE
-ARG RUN_CMD
-ARG BUILD_REPO
-ARG BUILD_TIME
+FROM $BASE as base
 
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
@@ -50,6 +27,37 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-cran-stringr \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+# ------------------------------------------------------------------------------
+# BUILDER LAYER
+FROM base as builder
+
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
+	--no-install-recommends --no-install-suggests \
+		git \
+		g++ \
+		make \
+		r-cran-rcpp \
+	&& \
+	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+RUN git clone https://github.com/hihg-um/PROSPER.git
+
+RUN \
+	Rscript -e 'install.packages(c("bigassertr"))' && \
+	Rscript -e 'install.packages(c("bigreadr"))' && \
+	Rscript -e 'install.packages(c("cvAUC"))' && \
+	Rscript -e 'install.packages(c("SuperLearner"))'
+
+# ------------------------------------------------------------------------------
+# RUNTIME LAYER
+FROM base
+
+# build-args
+ARG BASE
+ARG RUN_CMD
+ARG BUILD_REPO
+ARG BUILD_TIME
 
 COPY --chmod=0555 --from=builder /usr/local/lib/R /usr/local/lib/R
 COPY --chmod=0555 --from=builder /PROSPER/scripts /usr/local/bin

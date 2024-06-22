@@ -20,6 +20,7 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		libeigen3-dev \
 		libbz2-1.0 \
 		libdeflate0 \
+		libicu74 \
 		liblzma5 \
 		libuv1 \
 		libzstd1 \
@@ -71,9 +72,6 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-cran-quantreg \
 		r-cran-qqman \
 		r-cran-quantreg \
-		r-cran-rcpp \
-		r-cran-rcpparmadillo \
-		r-cran-rcppeigen \
 		r-cran-rcurl \
 		r-cran-readr \
 		r-cran-reshape2 \
@@ -123,11 +121,6 @@ FROM base as builder
 
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
-		autoconf \
-		automake \
-		build-essential \
-		cmake \
-		gcc \
 		libboost-filesystem1.83-dev \
 		liblapack-dev \
 		libblas-dev \
@@ -137,14 +130,23 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		libuv1-dev \
 		libzstd-dev \
 		zlib1g-dev \
+		autoconf \
+		automake \
+		build-essential \
+		cmake \
+		gcc \
 		make \
 		pkg-config \
 		r-cran-codetools \
+		r-cran-rcpp \
+		r-cran-rcpparmadillo \
+		r-cran-rcppeigen \
 		r-cran-remotes
 
 WORKDIR /usr/src
 
-RUN Rscript -e 'remotes::install_github("cran/backports")' && \
+RUN \
+	Rscript -e 'remotes::install_github("cran/backports")' && \
 	Rscript -e 'remotes::install_github("cran/withr")' && \
 	Rscript -e 'remotes::install_github("cran/fansi")' && \
 	Rscript -e 'remotes::install_github("cran/stringi")' && \
@@ -164,26 +166,24 @@ RUN Rscript -e 'remotes::install_github("cran/backports")' && \
 	Rscript -e 'remotes::install_github("cran/mice")' && \
 	Rscript -e 'remotes::install_github("cran/pkgbuild")'
 
-RUN	Rscript -e 'remotes::install_github("cran/GWASExactHW")' \
-	Rscript -e 'remotes::install_github("smgogarten/SeqVarTools")' && \
-	Rscript -e 'remotes::install_github("smgogarten/SeqArray")' && \
-	Rscript -e 'remotes::install_github("smgogarten/GWASTools")' && \
-	Rscript -e 'remotes::install_github("smgogarten/SNPRelate")' \
-	Rscript -e 'remotes::install_github("bioc/gdsfmt")' && \
-	Rscript -e 'remotes::install_github("bioc/quantsmooth")'
-#	Rscript -e 'remotes::install_github("bioc/GENESIS")'
-
-RUN Rscript -e 'install.packages(c("formula.tools", \
-		"GWASExactHW", "logistf", "operator.tools"))' && \
-	Rscript -e 'BiocManager::install(c("gdsfmt", "GWASTools", \
-		"quantsmooth", "SeqArray", "SeqVarTools", "SNPRelate"))' && \
+RUN \
+	Rscript -e 'install.packages(c("formula.tools"))' && \
+	Rscript -e 'install.packages(c("GWASExactHW"))' && \
+	Rscript -e 'install.packages(c("logistf"))' && \
+	Rscript -e 'install.packages(c("operator.tools"))' && \
+	Rscript -e 'BiocManager::install(c("gdsfmt"))' && \
+	Rscript -e 'BiocManager::install(c("GWASTools"))' && \
+	Rscript -e 'BiocManager::install(c("quantsmooth"))' && \
+	Rscript -e 'BiocManager::install(c("SeqArray"))' && \
+	Rscript -e 'BiocManager::install(c("SeqVarTools"))' && \
+	Rscript -e 'BiocManager::install(c("SNPRelate"))' && \
 	Rscript -e 'BiocManager::install("GENESIS")'
 
 RUN	Rscript -e 'remotes::install_github("hihg-um/GMMAT")'
 
-RUN	Rscript -e 'remotes::install_github("xihaoli/STAAR")' && \
-	Rscript -e 'remotes::install_github("xihaoli/MultiSTAAR")' && \
-	Rscript -e 'remotes::install_github("xihaoli/MetaSTAAR")'
+RUN	Rscript -e 'remotes::install_github("hihg-um/STAAR")' && \
+	Rscript -e 'remotes::install_github("hihg-um/MultiSTAAR")' && \
+	Rscript -e 'remotes::install_github("hihg-um/MetaSTAAR")'
 
 # RUNTIME LAYER
 FROM base

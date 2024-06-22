@@ -14,8 +14,6 @@ RUN apt -y update -qq && apt -y upgrade && \
 		liblzma5 \
 		libzstd1 \
 		zlib1g \
-		g++ \
-		make \
 		xzip \
 		r-cran-backports \
 		r-cran-bit \
@@ -81,7 +79,9 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		autoconf \
 		automake \
 		cmake \
+		g++ \
 		make \
+		r-base-dev \
 		r-cran-codetools \
 		r-cran-rcpp \
 		r-cran-rcpparmadillo \
