@@ -8,6 +8,7 @@ FROM $BASE as base
 RUN apt -y update -qq && apt -y upgrade && \
 	DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
+		libbz2-1.0 \
 		libdeflate0 \
 		libeigen3-dev \
 		liblzma5 \
@@ -22,20 +23,21 @@ RUN apt -y update -qq && apt -y upgrade && \
 		r-cran-broom \
 		r-cran-crayon \
 		r-cran-data.table \
+		r-cran-domc \
 		r-cran-dplyr \
 		r-cran-forcats \
 		r-cran-foreach \
-		r-cran-generics \
 		r-cran-generics \
 		r-cran-glmnet \
 		r-cran-haven \
 		r-cran-hms \
 		r-cran-iterators \
-		r-cran-mice \
+		r-cran-lattice \
 		r-cran-jomo \
 		r-cran-lattice \
 		r-cran-lme4 \
 		r-cran-matrix \
+		r-cran-mice \
 		r-cran-minqa \
 		r-cran-mitml \
 		r-cran-nloptr \
@@ -63,6 +65,7 @@ RUN apt -y update -qq && apt -y upgrade && \
 		r-bioc-zlibbioc \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
 # ------------------------------------------------------------------------------
 # BUILDER LAYER
 FROM base as builder
@@ -70,35 +73,36 @@ FROM base as builder
 # builder only dependencies
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
+		libbz2-dev \
 		libdeflate-dev \
 		liblzma-dev \
 		libzstd-dev \
 		zlib1g-dev \
+		autoconf \
+		automake \
 		cmake \
+		make \
 		r-cran-codetools \
-		r-cran-domc \
 		r-cran-rcpp \
 		r-cran-rcpparmadillo \
 		r-cran-rcppeigen \
 		r-cran-remotes \
 		r-cran-testthat \
-		r-cran-biocmanager \
-	&& \
-	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
+		r-cran-biocmanager
 
 # install GMMAT
 RUN \
 	Rscript -e 'install.packages(c("CompQuadForm"))' && \
 	Rscript -e 'install.packages(c("operator.tools"))' && \
 	Rscript -e 'install.packages(c("formula.tools"))' && \
+	Rscript -e 'install.packages(c("GWASExactHW"))' && \
 	Rscript -e 'install.packages(c("logistf"))' && \
-	Rscript -e 'install.packages(c("purr"))' && \
+	Rscript -e 'install.packages(c("RcppArmadillo"))' && \
+	Rscript -e 'install.packages(c("data.table"))' && \
 	Rscript -e 'BiocManager::install(c("gdsfmt"))' && \
-	Rscript -e 'BiocManager::install(c("GWASExactHW"))' && \
 	Rscript -e 'BiocManager::install(c("SeqArray"))' && \
 	Rscript -e 'BiocManager::install(c("SeqVarTools"))' && \
 	Rscript -e 'remotes::install_github("hihg-um/GMMAT")'
-
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM base
@@ -111,6 +115,20 @@ ARG BUILD_TIME
 
 COPY --from=builder /usr/local/lib/R /usr/local/lib/R
 COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
+
+# Remove "Old packages"
+RUN apt -y remove \
+	r-bioc-biostrings \
+	r-bioc-genomeinfodb \
+	&& \
+	apt -y autoremove
+
+# Old packages:
+#  'backports', 'brio', 'broom', 'callr', 'cli', 'crayon', 'data.table',
+#  'digest', 'evaluate', 'fansi', 'fs', 'littler', 'lme4', 'minqa', 'nloptr',
+#  'pkgbuild', 'processx', 'remotes', 'rlang', 'shape', 'stringi', 'testthat',
+#  'tidyselect', 'withr', 'zlibbioc', 'KernSmooth', 'lattice',
+#  'nlme', 'survival'
 
 LABEL org.opencontainers.image.base.digest=""
 LABEL org.opencontainers.image.base.name="${BASE}"
