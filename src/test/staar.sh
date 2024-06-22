@@ -1,8 +1,17 @@
 #!/bin/bash
 # SPDX-License-Identifier: GPL-2.0
-Rscript -e "library('Matrix'); library(mice); library(GMMAT); \
-	library(STAAR); sessionInfo();"
-Rscript	"staar.R"
+echo; echo "Testing STAAR"
+Rscript -e "library('Matrix'); library('mice'); library('GMMAT'); \
+	library('STAAR'); sessionInfo();"
 
-#    library('MultiSTAAR'); sessionInfo(); MultiSTAAR version; \
-#    library('MetaSTAAR'); sessionInfo(); MetaSTAAR version;"
+echo; echo -r "Testing staar.R: "
+Rscript /staar.R
+
+echo; echo "Testing MultiSTAAR"
+Rscript -e "library('Matrix'); library('mice'); library('GMMAT'); \
+	library('STAAR'); library('MultiSTAAR'); sessionInfo();"
+
+echo; echo "Testing MetaSTAAR"
+Rscript -e "library('Matrix'); library('mice'); library('GMMAT'); \
+	library('STAAR'); library('MultiSTAAR'); library('MetaSTAAR'); \
+	sessionInfo();"
