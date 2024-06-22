@@ -15,12 +15,14 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
 		gfortran \
 		libboost-filesystem1.83.0 \
+		libboost-regex1.83.0-icu74 \
 		liblapack3 \
 		libblas3 \
 		libeigen3-dev \
 		libbz2-1.0 \
 		libdeflate0 \
 		libicu74 \
+		libkf5i18n5 \
 		liblzma5 \
 		libuv1 \
 		libzstd1 \
@@ -54,7 +56,6 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-cran-matrix \
 		r-cran-matrixmodels \
 		r-cran-memoise \
-		r-cran-mass \
 		r-cran-mice \
 		r-cran-minqa \
 		r-cran-mitml \
@@ -122,10 +123,12 @@ FROM base as builder
 RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
 		libboost-filesystem1.83-dev \
+		libboost-regex1.83-dev \
 		liblapack-dev \
 		libblas-dev \
 		libbz2-dev \
 		libdeflate-dev \
+		libkf5i18n-dev \
 		liblzma-dev \
 		libuv1-dev \
 		libzstd-dev \
@@ -135,6 +138,7 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		build-essential \
 		cmake \
 		gcc \
+		git \
 		make \
 		pkg-config \
 		r-cran-codetools \
@@ -145,32 +149,33 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 
 WORKDIR /usr/src
 
-RUN \
-	Rscript -e 'remotes::install_github("cran/backports")' && \
-	Rscript -e 'remotes::install_github("cran/withr")' && \
-	Rscript -e 'remotes::install_github("cran/fansi")' && \
-	Rscript -e 'remotes::install_github("cran/stringi")' && \
-	Rscript -e 'remotes::install_github("cran/tidyselect")' && \
-	Rscript -e 'remotes::install_github("cran/broom")' && \
-	Rscript -e 'remotes::install_github("cran/processx")' && \
-	Rscript -e 'remotes::install_github("cran/callr")' && \
-	Rscript -e 'remotes::install_github("cran/data.table")' && \
-	Rscript -e 'remotes::install_github("cran/cli")' && \
-	Rscript -e 'remotes::install_github("cran/formula.tools")' && \
-	Rscript -e 'remotes::install_github("cran/operator.tools")' && \
-	Rscript -e 'remotes::install_github("cran/logistf")' && \
-	Rscript -e 'remotes::install_github("cran/lme4")' && \
-	Rscript -e 'remotes::install_github("cran/dplyr")' && \
-	Rscript -e 'remotes::install_github("cran/jomo")' && \
-	Rscript -e 'remotes::install_github("cran/mitml")' && \
-	Rscript -e 'remotes::install_github("cran/mice")' && \
-	Rscript -e 'remotes::install_github("cran/pkgbuild")'
+# release-74-2 tag
+RUN git clone -b release-74-2 --single-branch --depth=1 \
+		https://github.com/unicode-org/icu && cd icu/icu4c/source && \
+	./runConfigureICU Linux/clang && make install
 
 RUN \
-	Rscript -e 'install.packages(c("formula.tools"))' && \
-	Rscript -e 'install.packages(c("GWASExactHW"))' && \
+	Rscript -e 'install.packages(c("backports"))' && \
+	Rscript -e 'install.packages(c("withr"))' && \
+	Rscript -e 'install.packages(c("fansi"))' && \
+	Rscript -e 'install.packages(c("stringi"))' && \
+	Rscript -e 'install.packages(c("tidyselect"))' && \
+	Rscript -e 'install.packages(c("broom"))' && \
+	Rscript -e 'install.packages(c("processx"))' && \
+	Rscript -e 'install.packages(c("callr"))' && \
+	Rscript -e 'install.packages(c("data.table"))' && \
+	Rscript -e 'install.packages(c("cli"))' && \
 	Rscript -e 'install.packages(c("logistf"))' && \
+	Rscript -e 'install.packages(c("formula.tools"))' && \
 	Rscript -e 'install.packages(c("operator.tools"))' && \
+	Rscript -e 'install.packages(c("lme4"))' && \
+	Rscript -e 'install.packages(c("dplyr"))' && \
+	Rscript -e 'install.packages(c("jomo"))' && \
+	Rscript -e 'install.packages(c("mitml"))' && \
+	Rscript -e 'install.packages(c("mice"))' && \
+	Rscript -e 'install.packages(c("pkgbuild"))'
+
+RUN	Rscript -e 'BiocManager::install(c("GWASExactHW"))' && \
 	Rscript -e 'BiocManager::install(c("gdsfmt"))' && \
 	Rscript -e 'BiocManager::install(c("GWASTools"))' && \
 	Rscript -e 'BiocManager::install(c("quantsmooth"))' && \
