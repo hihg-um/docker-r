@@ -5,7 +5,7 @@ ORG_NAME ?= hihg-um
 OS_BASE ?= ubuntu
 OS_VER ?= 24.04
 
-TOOLS := genesis gmmat prosper prsice saige seqmeta staar
+TOOLS := snpstats genesis gmmat prosper prsice saige seqmeta staar
 
 ifneq ($(IMAGE_REPO),)
     DOCKER_REPO := $(IMAGE_REPO)/$(ORG_NAME)
@@ -45,7 +45,7 @@ SIF_IMAGES := $(TOOLS:=_$(DOCKER_TAG).sif)
 IMAGE_TEST := /test.sh
 
 .PHONY: apptainer_clean apptainer_distclean apptainer_test \
-	docker_base docker_clean docker_release $(TOOLS)
+	docker_base docker_clean docker_test docker_release $(TOOLS)
 
 help:
 	@echo "Targets: all build clean test release"

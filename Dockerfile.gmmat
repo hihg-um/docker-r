@@ -79,6 +79,7 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		autoconf \
 		automake \
 		cmake \
+		gcc \
 		g++ \
 		make \
 		r-base-dev \
