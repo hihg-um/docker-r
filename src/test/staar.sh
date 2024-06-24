@@ -4,7 +4,7 @@ echo; echo "Testing STAAR"
 Rscript -e "library('Matrix'); library('mice'); library('GMMAT'); \
 	library('STAAR'); sessionInfo();"
 
-echo; echo -r "Testing staar.R: "
+echo; echo -n "Testing staar.R: "
 Rscript /staar.R
 
 echo; echo "Testing MultiSTAAR"
