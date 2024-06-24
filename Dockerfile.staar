@@ -184,9 +184,9 @@ RUN	Rscript -e 'BiocManager::install(c("GWASExactHW"))' && \
 	Rscript -e 'BiocManager::install(c("SNPRelate"))' && \
 	Rscript -e 'BiocManager::install("GENESIS")'
 
-RUN	Rscript -e 'remotes::install_github("hihg-um/GMMAT")'
-
-RUN	Rscript -e 'remotes::install_github("hihg-um/STAAR")' && \
+RUN \
+	Rscript -e 'remotes::install_github("hihg-um/GMMAT")' && \
+	Rscript -e 'remotes::install_github("hihg-um/STAAR")' && \
 	Rscript -e 'remotes::install_github("hihg-um/MultiSTAAR")' && \
 	Rscript -e 'remotes::install_github("hihg-um/MetaSTAAR")'
 
@@ -198,7 +198,7 @@ ARG RUN_CMD
 ARG BUILD_REPO
 ARG BUILD_TIME
 
-COPY --chmod=0555 --from=builder /usr/local/lib/R /usr/local/lib/R
+COPY --from=builder /usr/local/lib/R /usr/local/lib/R
 COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
 COPY --chmod=0555 src/test/${RUN_CMD}.R /
 
