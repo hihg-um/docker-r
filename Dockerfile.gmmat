@@ -55,10 +55,10 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-bioc-biocparallel \
 		r-bioc-biocversion \
 		r-bioc-biostrings \
-		r-bioc-iranges \
 		r-bioc-genomeinfodb \
 		r-bioc-genomicranges \
 		r-bioc-s4vectors \
+		r-bioc-iranges \
 		r-bioc-zlibbioc \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*

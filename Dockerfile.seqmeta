@@ -25,8 +25,11 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
-RUN Rscript -e 'install.packages(c("bdsmatrix", "CompQuadForm", "coxme"))' && \
-	Rscript -e 'remotes::install_github("DavisBrian/seqMeta")'
+RUN \
+	Rscript -e 'install.packages(c("bdsmatrix"))' && \
+	Rscript -e 'install.packages(c("CompQuadForm"))' && \
+	Rscript -e 'install.packages(c("coxme"))' && \
+	Rscript -e 'remotes::install_github("hihg-um/seqMeta")'
 
 #------------------------------------------------------------------------------
 # RUNTIME LAYER

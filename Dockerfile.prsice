@@ -27,7 +27,8 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		make \
 		r-cran-rcppeigen
 
-RUN git clone --depth 1 https://github.com/choishingwan/PRSice.git && \
+RUN git clone --single-branch --depth 1 \
+	https://github.com/hihg-um/PRSice.git && \
 	cd PRSice && mkdir build && cd build && cmake ../ && make
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER

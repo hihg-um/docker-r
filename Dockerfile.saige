@@ -58,7 +58,7 @@ RUN \
 
 # clone saige and remove thirdParty and configure script
 # dependencies are already installed, so no need to run configure
-RUN git clone https://github.com/saigegit/SAIGE && \
+RUN git clone --single-branch --depth 1 https://github.com/hihg-um/SAIGE && \
 	rm -rf SAIGE/thirdParty SAIGE/configure
 
 RUN R CMD INSTALL SAIGE
