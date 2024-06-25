@@ -25,10 +25,13 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-cran-forcats \
 		r-cran-foreach \
 		r-cran-generics \
+		r-cran-generics \
 		r-cran-glmnet \
 		r-cran-haven \
 		r-cran-hms \
 		r-cran-iterators \
+		r-cran-mice \
+		r-cran-jomo \
 		r-cran-lattice \
 		r-cran-jomo \
 		r-cran-lattice \
@@ -98,10 +101,12 @@ RUN \
 	Rscript -e 'install.packages(c("logistf"))' && \
 	Rscript -e 'install.packages(c("RcppArmadillo"))' && \
 	Rscript -e 'install.packages(c("data.table"))' && \
+	Rscript -e 'BiocManager::install(c("GWASExactHW"))' && \
 	Rscript -e 'BiocManager::install(c("gdsfmt"))' && \
 	Rscript -e 'BiocManager::install(c("SeqArray"))' && \
 	Rscript -e 'BiocManager::install(c("SeqVarTools"))' && \
-	Rscript -e 'remotes::install_github("hihg-um/GMMAT")'
+	Rscript -e 'remotes::install_github("hihg-um/GMMAT@1272b9f9306406e07d84ae748811cb755c3b9abe")'
+
 # ------------------------------------------------------------------------------
 # RUNTIME LAYER
 FROM base
@@ -114,13 +119,6 @@ ARG BUILD_TIME
 
 COPY --from=builder /usr/local/lib/R /usr/local/lib/R
 COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
-
-# Remove "Old packages"
-RUN apt -y remove \
-	r-bioc-biostrings \
-	r-bioc-genomeinfodb \
-	&& \
-	apt -y autoremove
 
 # Old packages:
 #  'backports', 'brio', 'broom', 'callr', 'cli', 'crayon', 'data.table',
