@@ -129,6 +129,8 @@ RUN apt -y remove \
 #  'tidyselect', 'withr', 'zlibbioc', 'KernSmooth', 'lattice',
 #  'nlme', 'survival'
 
+ENTRYPOINT [ "Rscript" ]
+
 LABEL org.opencontainers.image.base.digest=""
 LABEL org.opencontainers.image.base.name="${BASE}"
 LABEL org.opencontainers.image.created="${BUILD_TIME}"

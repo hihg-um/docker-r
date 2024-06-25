@@ -71,9 +71,11 @@ ARG RUN_CMD
 ARG BUILD_REPO
 ARG BUILD_TIME
 
-COPY --chmod=0555 --from=builder /SAIGE/extdata/*.R /usr/local/bin/
 COPY --from=builder /usr/local/lib/R /usr/local/lib/R
+COPY --chmod=0555 --from=builder /SAIGE/extdata/*.R /usr/local/bin/
 COPY --chmod=0555 src/test/${RUN_CMD}.sh /test.sh
+
+ENTRYPOINT [ "Rscript" ]
 
 LABEL org.opencontainers.image.base.digest=""
 LABEL org.opencontainers.image.base.name="${BASE}"
