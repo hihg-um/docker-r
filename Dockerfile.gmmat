@@ -5,8 +5,7 @@ ARG BASE
 FROM $BASE as base
 
 # shared builder and runtime dependencies
-RUN apt -y update -qq && apt -y upgrade && \
-	DEBIAN_FRONTEND=noninteractive apt -y install \
+RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 	--no-install-recommends --no-install-suggests \
 		libbz2-1.0 \
 		libdeflate0 \
