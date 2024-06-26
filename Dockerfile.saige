@@ -19,9 +19,10 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-cran-lattice \
 		r-cran-matrix \
 		r-cran-optparse \
-		r-cran-rcpp \
 		r-cran-rcppparallel \
 		r-cran-rhpcblasctl \
+		r-cran-rspectra \
+		r-cran-rsqlite \
 	&& \
 	apt -y clean && rm -rf /var/lib/apt/lists/* /tmp/*
 # ------------------------------------------------------------------------------
@@ -45,10 +46,9 @@ RUN apt -y update -qq && DEBIAN_FRONTEND=noninteractive apt -y install \
 		r-cran-dplyr \
 		r-cran-qlcmatrix \
 		r-cran-r.utils \
+		r-cran-rcpp \
 		r-cran-rcpparmadillo \
-		r-cran-rcppeigen \
-		r-cran-rspectra \
-		r-cran-rsqlite
+		r-cran-rcppeigen
 
 # pick up remaining bioconductor dependencies not packaged w/ ubuntu 
 RUN \
