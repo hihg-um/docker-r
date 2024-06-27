@@ -122,6 +122,7 @@ RUN \
 	Rscript -e 'BiocManager::install(c("gdsfmt"))' && \
 	Rscript -e 'BiocManager::install(c("quantsmooth"))' && \
 	Rscript -e 'BiocManager::install(c("GWASTools"))' && \
+	Rscript -e 'BiocManager::install(c("GWASdata"))' && \
 	Rscript -e 'BiocManager::install(c("SeqArray"))' && \
 	Rscript -e 'BiocManager::install(c("SeqVarTools"))' && \
 	Rscript -e 'BiocManager::install(c("SNPRelate"))' && \
